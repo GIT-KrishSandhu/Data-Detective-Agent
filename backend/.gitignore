@@ -1,0 +1,25 @@
+# Python virtual env
+.venv/
+env/
+venv/
+ENV/
+
+# Python compiled bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Local environment variables files
+.env
+.env.local
+.env.*
+
+# Local data storage and logs
+storage/
+logs/
+*.log
+*.sqlite
+
+# OS-specific files
+.DS_Store
+Thumbs.db

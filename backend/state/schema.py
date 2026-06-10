@@ -39,6 +39,28 @@ class AgentState(TypedDict):
     statistical_summary: Optional[Dict[str, Any]]
     charts: Optional[List[Dict[str, Any]]]
     
+    # Phase 4 AgentResult additions
+    planner_result: Optional[Dict[str, Any]]
+    quality_result: Optional[Dict[str, Any]]
+    quality_findings: Optional[List[Dict[str, Any]]]
+    quality_recommendations: Optional[List[str]]
+    quality_confidence: Optional[float]
+    agent_execution_log: Optional[List[Dict[str, Any]]]
+    
+    # Phase 5 Semantic Blackboard additions
+    semantic_goal: Optional[Dict[str, Any]]
+    semantic_dataset: Optional[Dict[str, Any]]
+    semantic_issues: Optional[List[Dict[str, Any]]]
+    semantic_recommendations: Optional[List[Dict[str, Any]]]
+    semantic_memories: Optional[List[Dict[str, Any]]]
+    semantic_relationships: Optional[List[Dict[str, Any]]]
+    evaluation_result: Optional[Dict[str, Any]]
+    
+    blackboard_version: int
+    blackboard_entity_count: int
+    blackboard_last_updated_by: str
+    blackboard_last_trace_id: str
+    
     # Cleaning actions and human approval structure
     suggested_cleaning_actions: Optional[List[Dict[str, Any]]]
     user_approved_cleaning_actions: Optional[List[Dict[str, Any]]]
@@ -51,3 +73,15 @@ class AgentState(TypedDict):
     # Final generated artifacts
     final_report: Optional[str]  # Markdown string
     final_dataset_path: Optional[str]
+
+    # Phase 6 Statistics & BI Readiness Agent additions
+    bi_readiness_result: Optional[Dict[str, Any]]
+    semantic_statistics: Optional[Dict[str, Any]]
+    semantic_powerbi_readiness: Optional[Dict[str, Any]]
+    semantic_business_metrics: Optional[List[Dict[str, Any]]]
+    semantic_distributions: Optional[List[Dict[str, Any]]]
+    semantic_aggregation_recommendations: Optional[List[Dict[str, Any]]]
+    bi_evidence_confidence: Optional[float]
+    bi_reasoning_confidence: Optional[float]
+    bi_recommendation_confidence: Optional[float]
+

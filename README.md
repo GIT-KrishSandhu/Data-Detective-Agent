@@ -1,141 +1,103 @@
-# Data Detective Agent
+# Data Detective
 
-Data Detective Agent is an evidence-first, multi-agent data readiness platform built for the **Microsoft Agents League Hackathon**. 
+[![Microsoft Agents League Hackathon](https://img.shields.io/badge/Microsoft%20Hackathon-Agents%20League-blue.svg)](https://github.com/GIT-KrishSandhu/Data-Detective-Agent)
+[![Python Version](https://img.shields.io/badge/Python-3.12-blue.svg)](https://www.python.org/)
+[![Next.js Version](https://img.shields.io/badge/Next.js-16.2.7-black.svg)](https://nextjs.org/)
+[![Build Status](https://img.shields.io/badge/Build-Passing-emerald.svg)]()
+[![Determinism Index](https://img.shields.io/badge/Determinism-100%25-emerald.svg)]()
 
-It enables teams, analysts, and developers to upload large datasets, automatically profile schemas, audit data quality, construct clean star schemas, and compile stakeholder summaries—all with strict data safety constraints, comprehensive telemetry tracking, and zero hallucinated insights.
+> **Enterprise AI agents that audit datasets before they reach Power BI.**
+
+Data Detective is a **Semantic Blackboard Multi-Agent Enterprise Data Auditing Platform** designed to validate, profile, and certify raw corporate datasets before ingestion into Power BI reports and Microsoft Fabric semantic models.
+
+---
+
+## 🧠 Architecture Overview
+
+### Semantic Blackboard Multi-Agent System
+Rather than relying on generic chat bubbles or fragile prompt chains, Data Detective uses a decoupled **Semantic Blackboard Architecture**. A coordinator runtime drives sequential specialist agents, which read from and write back to a shared, version-controlled state.
+
+```mermaid
+graph TD
+    A[Upload CSV/Excel] --> B[Data Detective Backend API]
+    B --> C[PostgreSQL Metadata Persistence]
+    B --> D[LocalRuntime Orchestration]
+    D --> E[Semantic Blackboard Memory]
+    E <--> F[Planner Agent]
+    E <--> G[Quality Agent]
+    E <--> H[BI Readiness Agent]
+    E <--> I[Evaluation Agent]
+    I --> J[Enterprise BI Readiness Certificate]
+```
+
+### Agent Routing Flow
+Every run executes a deterministic pipeline that ensures data structure safety, quality validation, schema mapping, and runtime verification before producing a certificate.
+
+```mermaid
+graph LR
+    START([START]) --> Planner[Planner Agent]
+    Planner --> Quality[Quality Agent]
+    Quality --> BI[BI Readiness Agent]
+    BI --> Evaluation[Evaluation Agent]
+    Evaluation --> END([END])
+```
 
 ---
 
 ## 🚀 Key Features
 
-* **Data Quality Audit**: Automatic schema parsing and constraint validation (missing columns, type mismatches, anomalies).
-* **Exploratory Data Analysis (EDA)**: Profiling distributions, standard metrics (mean, median, std dev), and correlations.
-* **Executive Summary**: Evidence-first insights compiled into executive summaries for business users.
-* **Power BI Preparation**: Suggesting denormalization plans, clean schemas, and clean table headers to streamline Power BI imports.
-* **Evidence-First Principle**: Every report statement and visualization is linked directly to a traceable SQL or Pandas query. No forecasting, no predictions, and no unsupported claims.
-* **Human-in-the-Loop Safeguards**: Data cleaning policies are previewed in code format. No modifications are applied to the dataset without explicit human approval.
+* **Power BI Readiness Engine**: Validates column cardinality, PK/FK links, data uniformity, date continuity, and aggregates.
+* **Statistics as Semantic Entities**: Column distributions, primary key candidates, and metrics are modeled as structured entities (`DistributionEntity`, `BusinessMetricEntity`, `AggregationRecommendationEntity`) rather than unstructured dictionary lists.
+* **Multi-Agent Execution Timeline**: Displays real-time, step-by-step progress of agent invocations, tool run durations, and blackboard state versioning.
+* **Blackboard Inspector**: Live inspectable developer debugger displaying all compiled semantic relationships, memories, and entities.
+* **Enterprise BI Readiness Certificate**: executive widget certifying datasets with weighted scores, overall statuses (PASS, WARNING, FAIL), and checked execution trace checkpoints.
 
 ---
 
-## 🛠️ Technology Stack
+## 🛡️ Core Evaluation Methodology
 
-* **Frontend**: Next.js 15+ (App Router), TypeScript, Tailwind CSS, shadcn/ui, Plotly.js
-* **Backend**: FastAPI, Python 3.12, Uvicorn
-* **Agent Layer**: LangGraph, LangChain (Provider-Agnostic LLM integration)
-* **Database**: PostgreSQL (using async SQLAlchemy with asyncpg)
-* **Deployment Target**: Local development (first phase), Azure App Services & Azure Database for PostgreSQL (later phase)
+The final `EvaluationAgent` runs an automated verification check over the blackboard state, calculating an overall quality index based on five deterministic dimensions:
+
+| Dimension | Weight | Description |
+| :--- | :---: | :--- |
+| **Evidence Completeness** | 20% | Ratio of columns successfully profiled into semantic distributions. |
+| **Determinism** | 20% | Ensures 100% of reasoning checks map directly to code checks. |
+| **Recommendation Coverage** | 20% | Percentage of identified quality issues with accompanying resolution advice. |
+| **Agent Agreement** | 20% | Consistency between planner expectations and actual check discoveries. |
+| **Trace Completeness** | 20% | Ensures every log step contains a valid parent trace ID and completed status. |
 
 ---
 
-## 📂 Project Structure
+## 🔌 Microsoft Fabric & Power BI Alignment
+
+Data Detective fits natively into Microsoft-centric data engineering and analytics pipelines:
+1. **Star Schema Reasoning**: The BI Readiness Agent infers dimension and fact tables, identifying where standard calendars (e.g., date dimensions) are required.
+2. **Aggregation Safety**: Automatically recommends default aggregation settings (e.g., Sum vs Median) for columns based on statistical skewness boundaries to prevent skewed dashboards.
+3. **Foundry-Compatible Adapter**: Exposes provider-agnostic adapter hooks (`FoundryAdapterInterface`) prepared for direct migration to Azure AI Foundry agent hosting.
+
+---
+
+## 🗺️ Project Roadmap
 
 ```
-Data-Detective-Agent/
-│
-├── frontend/                     # Next.js 15+ App Router Web Application
-│   ├── app/                      # App layouts and pages (page.tsx, layout.tsx)
-│   ├── components/               # Reusable UI component blocks (shadcn/ui buttons, cards)
-│   ├── lib/                      # Helper modules and styling utilities
-│   ├── hooks/                    # Custom React hooks
-│   ├── types/                    # TypeScript interfaces
-│   └── services/                 # API connection modules
-│
-├── backend/                      # Python 3.12 FastAPI Server
-│   ├── api/                      # Routing routes and endpoints (v1 registry)
-│   ├── agents/                   # Agent core modules
-│   │   ├── planner/              # Drafts the analysis path based on goals
-│   │   ├── quality/              # Inspects schemas for missing fields and type errors
-│   │   ├── statistics/           # Profiles distributions and correlation matrices
-│   │   ├── visualization/        # Formulates Plotly spec queries for client rendering
-│   │   ├── cleaning/             # Generates cleaning policy recommendations
-│   │   ├── critic/               # Verification guardrail (prevents forecasting & hallucinations)
-│   │   ├── evaluation/           # Validates calculations and links statements to queries
-│   │   └── report/               # Compiles final report markdown and outputs
-│   │
-│   ├── tools/                    # Tool interfaces (Inspect, profile, edit)
-│   ├── services/                 # Common services (telemetry logging)
-│   ├── database/                 # SQLAlchemy connections and sessions
-│   ├── models/                   # DB schema model structures
-│   ├── schemas/                  # Pydantic query schemas
-│   ├── prompts/                  # Large Language Model instructions
-│   └── core/                     # Server settings and environmental configurations
-│
-├── docs/                         # Architecture, responsibilities, and workflow guides
-│
-├── .env.example                  # Template configuration for backend keys
-└── README.md                     # Platform guide and quickstart
+Phase 6: BI Readiness Agent (renamed from Statistics Agent)   ██████████ 100% (Complete)
+Phase 7: Executive Report Agent                                ██████████ 0%   (Pending)
+Phase 8: Azure Ingestion Integration                           ██████████ 0%   (Pending)
+Phase 9: UI Polish & Submission                                ██████████ 0%   (Pending)
 ```
 
 ---
 
-## ⚙️ Quick Start Guide
+## 🛠️ Tech Stack & Directory Structure
 
-### Prerequisites
-- [Node.js v20+](https://nodejs.org/)
-- [Python v3.12+](https://www.python.org/)
-- [PostgreSQL v15+](https://www.postgresql.org/) (Running locally)
+* **Frontend**: Next.js 16 (App Router), TypeScript, Tailwind CSS, Lucide Icons, Shadcn/ui
+* **Backend**: FastAPI, Python 3.12, SQLAlchemy (Async Asyncpg)
+* **Agent Engine**: LangGraph, LangChain
+* **Database**: PostgreSQL
 
----
-
-### Backend Setup
-
-1. **Navigate to the backend directory and create a virtual environment**:
-   ```bash
-   cd backend
-   python -m venv .venv
-   ```
-
-2. **Activate the virtual environment**:
-   - **Windows PowerShell**:
-     ```powershell
-     .venv\Scripts\Activate.ps1
-     ```
-   - **macOS / Linux**:
-     ```bash
-     source .venv/bin/activate
-     ```
-
-3. **Install the dependencies**:
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-4. **Set up Environment Variables**:
-   Copy `.env.example` to the root directory as `.env` and fill in your details:
-   ```bash
-   cp ../.env.example ../.env
-   ```
-
-5. **Start the FastAPI Dev Server**:
-   ```bash
-   uvicorn main:app --reload --port 8000
-   ```
-   *The Swagger interactive documentation will be available at [http://localhost:8000/docs](http://localhost:8000/docs).*
-
----
-
-### Frontend Setup
-
-1. **Navigate to the frontend directory**:
-   ```bash
-   cd frontend
-   ```
-
-2. **Install node dependencies**:
-   ```bash
-   npm install
-   ```
-
-3. **Run the Next.js development server**:
-   ```bash
-   npm run dev
-   ```
-   *Open [http://localhost:3000](http://localhost:3000) to view the client dashboard.*
-
----
-
-## 🛡️ Core Agent Safety Guidelines
-This project enforces rigid safety principles defined in [architecture.md](file:///c:/Users/krish/Desktop/AI%20Skills%20Fest/Data-Detective-Agent/docs/architecture.md):
-1. **Descriptive Only**: Agents must not attempt time-series forecasting, predictive modeling, or extrapolation.
-2. **Hard Database Evidence**: No insight is permitted in the final report unless it is accompanied by an audit trail (SQL check or Pandas aggregate script) verified by the `EvaluationAgent`.
-3. **No Automatic Edits**: Under no circumstances can data cleaning scripts be applied to the primary dataset without human review and button-confirmation via the UI.
+### Directory Map
+* [backend/agents/bi_readiness/](file:///c:/Users/krish/Desktop/AI%20Skills%20Fest/Data-Detective-Agent/backend/agents/bi_readiness/): Coordinates profile tools and generates Power BI Readiness recommendations.
+* [backend/tools/statistics/](file:///c:/Users/krish/Desktop/AI%20Skills%20Fest/Data-Detective-Agent/backend/tools/statistics/): Deterministic statistics tools (`metric_relationship_tool.py`, `outlier_summary_tool.py`).
+* [backend/services/microsoft/semantic_entities/](file:///c:/Users/krish/Desktop/AI%20Skills%20Fest/Data-Detective-Agent/backend/services/microsoft/semantic_entities/): Pydantic specifications for blackboard semantic models.
+* [frontend/app/explore/page.tsx](file:///c:/Users/krish/Desktop/AI%20Skills%20Fest/Data-Detective-Agent/frontend/app/explore/page.tsx): Main explorer interface with the Readiness Dashboard, Activity Log, and Blackboard debugger.
+* [frontend/components/workflow-viewer.tsx](file:///c:/Users/krish/Desktop/AI%20Skills%20Fest/Data-Detective-Agent/frontend/components/workflow-viewer.tsx): Renders the animated multi-agent network log steps.

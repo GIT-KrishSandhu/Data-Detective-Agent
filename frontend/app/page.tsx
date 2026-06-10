@@ -140,10 +140,10 @@ export default function Home() {
             <span>Built for Microsoft Agents League Hackathon</span>
           </div>
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white via-slate-100 to-slate-400 leading-tight">
-            Evidence-First Multi-Agent Data Readiness
+            Data Detective
           </h1>
           <p className="text-slate-400 text-lg leading-relaxed">
-            Upload your dataset, select an analytical objective, and let a network of coordinate-driven agents plan, audit, clean, and generate report outputs directly traceable to raw data.
+            Enterprise AI agents that audit datasets before they reach Power BI.
           </p>
         </section>
 

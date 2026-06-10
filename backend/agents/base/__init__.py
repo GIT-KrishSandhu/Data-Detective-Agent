@@ -1,12 +1,14 @@
 """
 Provider-agnostic Base Agent configuration.
-Allows initializing agents with any LangChain ChatModel (e.g. ChatOpenAI, AzureChatOpenAI, ChatAnthropic),
+Allows initializing agents with any LangChain ChatModel,
 abstracting prompting and invocation to prevent vendor lock-in.
 """
 
 from abc import ABC, abstractmethod
 from typing import Any, Dict, List, Optional
+# pyrefly: ignore [missing-import]
 from langchain_core.language_models.chat_models import BaseChatModel
+# pyrefly: ignore [missing-import]
 from langchain_core.prompts import ChatPromptTemplate
 from services.telemetry.logger import telemetry_logger
 

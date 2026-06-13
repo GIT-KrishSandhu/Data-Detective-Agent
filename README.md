@@ -10,7 +10,7 @@
 
 > **A multi-agent Reasoning System that deterministically audits datasets for Business Intelligence readiness, grounds enterprise recommendations with Microsoft Foundry IQ, and uses Azure AI Foundry GPT-5-mini exclusively for executive communication.**
 
-### [Demo Video here](https://drive.google.com/)
+### [Demo Video here](https://drive.google.com/file/d/17G87sbmzIg2tqAmX_w1_GdYkkXexDirf/view?usp=drive_link)
 
 
 # The Problem

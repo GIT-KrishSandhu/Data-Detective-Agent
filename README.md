@@ -10,7 +10,8 @@
 
 > **A multi-agent Reasoning System that deterministically audits datasets for Business Intelligence readiness, grounds enterprise recommendations with Microsoft Foundry IQ, and uses Azure AI Foundry GPT-5-mini exclusively for executive communication.**
 
----
+### [Demo Video here](https://drive.google.com/)
+
 
 # The Problem
 
@@ -25,6 +26,12 @@ This results in:
 * poor reproducibility
 * difficult enterprise auditing
 
+## Preview
+
+<p align="center">
+  <img src="assets/landing-page.png" width="900">
+</p>
+
 ---
 
 # The Solution
@@ -37,34 +44,31 @@ Instead of asking an LLM to analyze raw data, specialized deterministic agents e
 
 # Architecture
 
-```text
-Dataset Upload
-        │
-        ▼
-Planner Agent
-        │
-        ▼
-Quality Agent
-        │
-        ▼
-BI Readiness Agent
-        │
-        ▼
-Evaluation Agent
-        │
-        ▼
-Semantic Blackboard
-        │
-        ▼
-Microsoft Foundry IQ
-(Enterprise Knowledge Grounding)
-        │
-        ▼
-Azure AI Foundry GPT-5-mini
-(Executive Language Generation)
-        │
-        ▼
-Business Intelligence Dashboard
+```mermaid
+graph TD
+
+    User([Upload CSV / Excel])
+
+    User --> API[Data Detective Backend API]
+
+    API --> DB[(PostgreSQL Metadata Persistence)]
+
+    API --> Runtime[Runtime Orchestrator]
+
+    Runtime --> Blackboard[Semantic Blackboard Memory]
+
+    Blackboard <--> Planner[Planner Agent]
+    Blackboard <--> Quality[Quality Agent]
+    Blackboard <--> BI[BI Readiness Agent]
+    Blackboard <--> Eval[Evaluation Agent]
+
+    Blackboard --> FoundryIQ[Microsoft Foundry IQ<br/>Enterprise Knowledge Grounding]
+
+    FoundryIQ --> GPT[Azure AI Foundry GPT-5-mini<br/>Executive Language Layer]
+
+    GPT --> Dashboard[Business Intelligence Dashboard]
+
+    Eval --> Certificate[Enterprise BI Readiness Certificate]
 ```
 
 ---

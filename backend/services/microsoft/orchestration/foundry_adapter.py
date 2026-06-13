@@ -56,3 +56,11 @@ class FoundryAdapterInterface(ABC):
         """
         pass
 
+    @abstractmethod
+    def generate_executive_briefs(self, data: Dict[str, Any]) -> Dict[str, str]:
+        """
+        Generates summaries and explanations of deterministic blackboard evidence.
+        """
+        pass
+
+

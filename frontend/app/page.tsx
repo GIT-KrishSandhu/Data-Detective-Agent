@@ -4,58 +4,23 @@ import React, { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { 
-  ShieldAlert, 
-  FileSpreadsheet, 
-  BarChart3, 
-  Sparkles, 
   ArrowRight, 
   Database, 
   Play, 
   Terminal,
   Activity,
   Search,
-  Loader2
+  Loader2,
+  Sparkles
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import UploadDataset from "@/components/upload-dataset";
 
 export default function Home() {
   const router = useRouter();
-  const [selectedGoal, setSelectedGoal] = useState<string>("quality");
   const [datasetId, setDatasetId] = useState<string | null>(null);
   const [uploadedMeta, setUploadedMeta] = useState<any | null>(null);
   const [isLaunching, setIsLaunching] = useState<boolean>(false);
-
-  const goals = [
-    {
-      id: "quality",
-      title: "Data Quality Audit",
-      description: "Inspect datasets for anomalies, missing fields, schema mismatches, and integrity issues.",
-      icon: ShieldAlert,
-      color: "from-amber-500/20 to-red-500/20 border-amber-500/30 text-amber-400",
-    },
-    {
-      id: "eda",
-      title: "Exploratory Data Analysis",
-      description: "Understand patterns, distributions, statistical measures, and structural insights.",
-      icon: BarChart3,
-      color: "from-blue-500/20 to-indigo-500/20 border-blue-500/30 text-blue-400",
-    },
-    {
-      id: "summary",
-      title: "Executive Summary",
-      description: "Produce evidence-backed summaries, key takeaways, and metric highlights for stakeholders.",
-      icon: Sparkles,
-      color: "from-emerald-500/20 to-teal-500/20 border-emerald-500/30 text-emerald-400",
-    },
-    {
-      id: "powerbi",
-      title: "Power BI Preparation",
-      description: "Shape datasets, suggest star schemas, clean column names, and verify normalization for reports.",
-      icon: FileSpreadsheet,
-      color: "from-purple-500/20 to-pink-500/20 border-purple-500/30 text-purple-400",
-    },
-  ];
 
   const handleUploadSuccess = (data: any) => {
     setDatasetId(data.dataset_id);
@@ -66,15 +31,6 @@ export default function Home() {
     if (!datasetId) return;
     setIsLaunching(true);
 
-    const goalMap: Record<string, string> = {
-      quality: "Data Quality Audit",
-      eda: "Exploratory Data Analysis",
-      summary: "Executive Summary",
-      powerbi: "Power BI Preparation"
-    };
-
-    const targetGoal = goalMap[selectedGoal] || "Data Quality Audit";
-
     try {
       const apiBase = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
       const response = await fetch(`${apiBase}/api/v1/agents/analyze`, {
@@ -84,7 +40,7 @@ export default function Home() {
         },
         body: JSON.stringify({
           dataset_id: datasetId,
-          goal: targetGoal
+          goal: "Enterprise Dataset Audit"
         })
       });
 
@@ -103,31 +59,26 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 font-sans selection:bg-indigo-500 selection:text-white overflow-x-hidden relative">
-      {/* Background Gradient Orbs */}
-      <div className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] rounded-full bg-indigo-500/10 blur-[120px] pointer-events-none" />
-      <div className="absolute bottom-[-10%] right-[-10%] w-[600px] h-[600px] rounded-full bg-purple-500/10 blur-[140px] pointer-events-none" />
+    <div className="min-h-screen bg-slate-950 text-slate-100 font-sans selection:bg-indigo-500 selection:text-white overflow-x-hidden relative" style={{
+      backgroundImage: `radial-gradient(circle at 50% 10%, rgba(99, 102, 241, 0.03) 0%, transparent 60%), 
+                        linear-gradient(to right, rgba(255, 255, 255, 0.005) 1px, transparent 1px), 
+                        linear-gradient(to bottom, rgba(255, 255, 255, 0.005) 1px, transparent 1px)`,
+      backgroundSize: "100% 100%, 32px 32px, 32px 32px"
+    }}>
+      {/* Soft Fabric-style top radial glow */}
+      <div className="absolute top-0 left-1/4 right-1/4 h-96 bg-indigo-500/5 blur-[100px] rounded-full pointer-events-none" />
       
       {/* Navbar */}
       <header className="border-b border-slate-900 bg-slate-950/80 backdrop-blur sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+        <div className="max-w-7xl mx-auto px-6 h-16 flex items-center">
           <div className="flex items-center gap-3">
             <div className="h-9 w-9 rounded-lg bg-gradient-to-tr from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/25">
               <Database className="h-5 w-5 text-white" />
             </div>
             <div>
-              <span className="font-semibold text-lg bg-clip-text text-transparent bg-gradient-to-r from-indigo-200 to-slate-200">Data Detective Agent</span>
-              <span className="ml-2 text-[10px] px-2 py-0.5 rounded-full bg-indigo-950 text-indigo-400 border border-indigo-900">v1.0 (Ingestion)</span>
+              <span className="font-semibold text-lg bg-clip-text text-transparent bg-gradient-to-r from-indigo-200 to-slate-200">Data Detective</span>
             </div>
           </div>
-          <nav className="hidden md:flex items-center gap-6 text-sm text-slate-400">
-            <a href="#features" className="hover:text-slate-100 transition-colors">Features</a>
-            <a href="#agents" className="hover:text-slate-100 transition-colors">Agents League</a>
-            <a href="#docs" className="hover:text-slate-100 transition-colors">Documentation</a>
-            <Button variant="outline" className="border-slate-800 bg-slate-900/50 hover:bg-slate-900 hover:text-white text-slate-300">
-              System Health
-            </Button>
-          </nav>
         </div>
       </header>
 
@@ -159,50 +110,6 @@ export default function Home() {
               </div>
 
               <UploadDataset onUploadSuccess={handleUploadSuccess} />
-            </div>
-
-            {/* Step 2: Select Goal */}
-            <div className="p-6 rounded-xl border border-slate-900 bg-slate-950/20 backdrop-blur-sm flex flex-col gap-4">
-              <div className="flex items-center gap-3">
-                <span className="h-6 w-6 rounded-full bg-slate-900 border border-slate-800 flex items-center justify-center text-xs font-bold text-slate-400">2</span>
-                <h3 className="font-semibold text-lg">Define Analytical Goal</h3>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {goals.map((g) => {
-                  const Icon = g.icon;
-                  const isSelected = selectedGoal === g.id;
-                  return (
-                    <div
-                      key={g.id}
-                      onClick={() => setSelectedGoal(g.id)}
-                      className={`p-4 rounded-lg border text-left cursor-pointer transition-all flex flex-col justify-between gap-3 group relative overflow-hidden ${
-                        isSelected 
-                          ? `bg-slate-900 border-indigo-500 shadow-md shadow-indigo-500/5` 
-                          : "bg-slate-950/40 border-slate-900 hover:border-slate-800"
-                      }`}
-                    >
-                      <div className={`absolute top-0 right-0 w-16 h-16 bg-gradient-to-br ${g.color} opacity-0 group-hover:opacity-100 transition-opacity blur-lg pointer-events-none`} />
-                      <div className="flex items-center justify-between z-10">
-                        <div className={`h-8 w-8 rounded-lg flex items-center justify-center border ${
-                          isSelected ? "bg-indigo-950 border-indigo-800/40 text-indigo-400" : "bg-slate-900 border-slate-800 text-slate-400"
-                        }`}>
-                          <Icon className="h-4 w-4" />
-                        </div>
-                        {isSelected && (
-                          <span className="text-[10px] uppercase font-bold tracking-wider text-indigo-400 bg-indigo-950/60 px-2 py-0.5 rounded border border-indigo-900">
-                            Selected
-                          </span>
-                        )}
-                      </div>
-                      <div className="z-10">
-                        <h4 className="font-semibold text-sm text-slate-200">{g.title}</h4>
-                        <p className="text-xs text-slate-400 mt-1 leading-relaxed">{g.description}</p>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
 
               <div className="mt-4 pt-4 border-t border-slate-900 flex justify-end gap-3">
                 {datasetId && (
@@ -229,7 +136,7 @@ export default function Home() {
                   ) : (
                     <>
                       <Play className="h-4 w-4 mr-2" />
-                      Launch Agents Analysis
+                      Launch Analysis
                       <ArrowRight className="h-4 w-4 ml-2" />
                     </>
                   )}
@@ -290,7 +197,7 @@ export default function Home() {
 
       {/* Footer */}
       <footer className="border-t border-slate-900 bg-slate-950 mt-16 py-8 text-center text-xs text-slate-500">
-        <p>© 2026 Data Detective Agent • Prepared for the Microsoft Agents League Hackathon</p>
+        <p>© 2026 Data Detective • Prepared for the Microsoft Agents League Hackathon</p>
       </footer>
     </div>
   );

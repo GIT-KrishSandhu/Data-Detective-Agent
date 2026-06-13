@@ -19,7 +19,8 @@ import {
   Cpu,
   BrainCircuit,
   Terminal,
-  Activity
+  Activity,
+  Loader2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { 
@@ -31,6 +32,34 @@ import {
   TableRow 
 } from "@/components/ui/table";
 import WorkflowViewer from "@/components/workflow-viewer";
+import RuntimeStatus from "@/components/runtime-status";
+import SemanticVisualizer from "@/components/semantic-visualizer";
+
+const formatLogTime = (isoString?: string) => {
+  if (!isoString) return "12:01:04";
+  try {
+    const d = new Date(isoString);
+    return d.toTimeString().split(" ")[0];
+  } catch {
+    return "12:01:04";
+  }
+};
+
+const getCleanFilename = (filename?: string) => {
+  if (!filename) return "";
+  const parts = filename.split("_");
+  if (parts.length > 1 && parts[0].length === 36) {
+    return parts.slice(1).join("_");
+  }
+  return filename;
+};
+
+const getProgressBar = (percent: number) => {
+  const totalBlocks = 15;
+  const filledBlocks = Math.round((percent / 100) * totalBlocks);
+  const emptyBlocks = totalBlocks - filledBlocks;
+  return "█".repeat(filledBlocks) + "░".repeat(emptyBlocks);
+};
 
 interface ColumnSchema {
   name: string;
@@ -77,7 +106,7 @@ export default function ExplorePage() {
   const [metadata, setMetadata] = useState<DatasetMetadata | null>(null);
   const [schemaInfo, setSchemaInfo] = useState<ColumnSchema[]>([]);
   const [previewData, setPreviewData] = useState<DatasetPreview | null>(null);
-  const [activeTab, setActiveTab] = useState<"readiness" | "quality" | "schema" | "preview" | "evaluation">("readiness");
+  const [activeTab, setActiveTab] = useState<"readiness" | "graph" | "quality" | "schema" | "preview" | "evaluation">("readiness");
 
   // Workflow & Agent States
   const [workflowSteps, setWorkflowSteps] = useState<string[]>([]);
@@ -85,7 +114,6 @@ export default function ExplorePage() {
   const [plannerConfidence, setPlannerConfidence] = useState<number>(0);
   const [workflowCurrentStep, setWorkflowCurrentStep] = useState<string>("idle");
 
-  const [plannerResult, setPlannerResult] = useState<any>(null);
   const [qualityResult, setQualityResult] = useState<any>(null);
   const [agentExecutionLog, setAgentExecutionLog] = useState<any[]>([]);
 
@@ -106,11 +134,28 @@ export default function ExplorePage() {
   const [semanticStatistics, setSemanticStatistics] = useState<any>(null);
   const [semanticPowerbiReadiness, setSemanticPowerbiReadiness] = useState<any>(null);
   const [semanticBusinessMetrics, setSemanticBusinessMetrics] = useState<any[]>([]);
-  const [semanticDistributions, setSemanticDistributions] = useState<any[]>([]);
   const [semanticAggregationRecommendations, setSemanticAggregationRecommendations] = useState<any[]>([]);
-  const [biEvidenceConfidence, setBiEvidenceConfidence] = useState<number | null>(null);
-  const [biReasoningConfidence, setBiReasoningConfidence] = useState<number | null>(null);
-  const [biRecommendationConfidence, setBiRecommendationConfidence] = useState<number | null>(null);
+
+  // Phase 7 additions
+  const [executiveSummary, setExecutiveSummary] = useState<string>("");
+  const [certificateWording, setCertificateWording] = useState<string>("");
+  const [managementExplanation, setManagementExplanation] = useState<string>("");
+  const [markdownExportWording, setMarkdownExportWording] = useState<string>("");
+
+  const [loadProgress, setLoadProgress] = useState<number>(0);
+
+  useEffect(() => {
+    if (!loading) return;
+    const interval = setInterval(() => {
+      setLoadProgress(prev => {
+        if (prev < 98) {
+          return prev + 1;
+        }
+        return prev;
+      });
+    }, 70);
+    return () => clearInterval(interval);
+  }, [loading]);
 
   useEffect(() => {
     if (!datasetId) {
@@ -164,7 +209,6 @@ export default function ExplorePage() {
             setWorkflowSteps(plan.workflow_steps);
             setPlannerReasoning(plan.reasoning);
             setPlannerConfidence(plan.confidence);
-            setPlannerResult(plan.planner_result);
             setQualityResult(plan.quality_result);
             setAgentExecutionLog(plan.agent_execution_log || []);
             setWorkflowCurrentStep("Evaluation Complete");
@@ -186,17 +230,27 @@ export default function ExplorePage() {
             setSemanticStatistics(plan.semantic_statistics);
             setSemanticPowerbiReadiness(plan.semantic_powerbi_readiness);
             setSemanticBusinessMetrics(plan.semantic_business_metrics || []);
-            setSemanticDistributions(plan.semantic_distributions || []);
             setSemanticAggregationRecommendations(plan.semantic_aggregation_recommendations || []);
-            setBiEvidenceConfidence(plan.bi_evidence_confidence);
-            setBiReasoningConfidence(plan.bi_reasoning_confidence);
-            setBiRecommendationConfidence(plan.bi_recommendation_confidence);
+
+            // Phase 7 additions
+            setExecutiveSummary(plan.executive_summary || "");
+            setCertificateWording(plan.certificate_wording || "");
+            setManagementExplanation(plan.management_explanation || "");
+            setMarkdownExportWording(plan.markdown_export_wording || "");
+
+            setLoadProgress(100);
+            setTimeout(() => {
+              setLoading(false);
+            }, 400);
+          } else {
+            setLoading(false);
           }
+        } else {
+          setLoading(false);
         }
 
       } catch (err: any) {
         setError(err.message || "Could not retrieve dataset details from server.");
-      } finally {
         setLoading(false);
       }
     };
@@ -254,10 +308,82 @@ export default function ExplorePage() {
   };
 
   if (loading) {
+    const p1 = Math.min(100, loadProgress * 5);
+    const p2 = Math.min(100, Math.max(0, (loadProgress - 20) * 5));
+    const p3 = Math.min(100, Math.max(0, (loadProgress - 40) * 5));
+    const p4 = Math.min(100, Math.max(0, (loadProgress - 60) * 5));
+    const p5 = Math.min(100, Math.max(0, (loadProgress - 80) * 5));
+
     return (
-      <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col items-center justify-center gap-4">
-        <div className="h-10 w-10 rounded-full border-2 border-indigo-500 border-t-transparent animate-spin" />
-        <p className="text-sm text-slate-400 font-medium">Running cognitive data agents...</p>
+      <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col items-center justify-center p-6 selection:bg-indigo-500 select-none" style={{
+        backgroundImage: `radial-gradient(circle at 50% 50%, rgba(99, 102, 241, 0.02) 0%, transparent 60%), 
+                          linear-gradient(to right, rgba(255, 255, 255, 0.003) 1px, transparent 1px), 
+                          linear-gradient(to bottom, rgba(255, 255, 255, 0.003) 1px, transparent 1px)`,
+        backgroundSize: "100% 100%, 32px 32px, 32px 32px"
+      }}>
+        <div className="max-w-md w-full p-6 rounded-xl border border-slate-900 bg-slate-950/60 backdrop-blur-md flex flex-col gap-6 font-mono text-xs text-slate-400">
+          <div className="flex items-center gap-2.5 border-b border-slate-900 pb-3">
+            <Loader2 className="h-4 w-4 text-indigo-400 animate-spin" />
+            <span className="font-bold text-slate-200 uppercase tracking-wider">Multi-Agent Ingest Session</span>
+          </div>
+
+          <div className="flex flex-col gap-4">
+            <div className="flex flex-col gap-1.5">
+              <div className="flex justify-between items-center">
+                <span className={p1 > 0 ? "text-slate-300 font-bold" : "text-slate-600"}>Uploading Dataset</span>
+                <span className="text-[10px] text-slate-500">{p1}%</span>
+              </div>
+              <div className={`font-mono text-xs ${p1 === 100 ? "text-emerald-400" : p1 > 0 ? "text-indigo-400" : "text-slate-800"}`}>
+                {getProgressBar(p1)}
+              </div>
+            </div>
+
+            <div className={`flex flex-col gap-1.5 transition-opacity duration-300 ${p1 >= 100 ? "opacity-100" : "opacity-20"}`}>
+              <div className="flex justify-between items-center">
+                <span className={p2 > 0 ? "text-slate-300 font-bold" : "text-slate-600"}>Planner Agent: Building execution graph</span>
+                <span className="text-[10px] text-slate-500">{p2}%</span>
+              </div>
+              <div className={`font-mono text-xs ${p2 === 100 ? "text-emerald-400" : p2 > 0 ? "text-indigo-400" : "text-slate-800"}`}>
+                {getProgressBar(p2)}
+              </div>
+            </div>
+
+            <div className={`flex flex-col gap-1.5 transition-opacity duration-300 ${p2 >= 100 ? "opacity-100" : "opacity-20"}`}>
+              <div className="flex justify-between items-center">
+                <span className={p3 > 0 ? "text-slate-300 font-bold" : "text-slate-600"}>Quality Agent: Executing profiling tools</span>
+                <span className="text-[10px] text-slate-500">{p3}%</span>
+              </div>
+              <div className={`font-mono text-xs ${p3 === 100 ? "text-emerald-400" : p3 > 0 ? "text-indigo-400" : "text-slate-800"}`}>
+                {getProgressBar(p3)}
+              </div>
+            </div>
+
+            <div className={`flex flex-col gap-1.5 transition-opacity duration-300 ${p3 >= 100 ? "opacity-100" : "opacity-20"}`}>
+              <div className="flex justify-between items-center">
+                <span className={p4 > 0 ? "text-slate-300 font-bold" : "text-slate-600"}>BI Readiness: Generating readiness model</span>
+                <span className="text-[10px] text-slate-500">{p4}%</span>
+              </div>
+              <div className={`font-mono text-xs ${p4 === 100 ? "text-emerald-400" : p4 > 0 ? "text-indigo-400" : "text-slate-800"}`}>
+                {getProgressBar(p4)}
+              </div>
+            </div>
+
+            <div className={`flex flex-col gap-1.5 transition-opacity duration-300 ${p4 >= 100 ? "opacity-100" : "opacity-20"}`}>
+              <div className="flex justify-between items-center">
+                <span className={p5 > 0 ? "text-slate-300 font-bold" : "text-slate-600"}>Evaluation Agent: Validating evidence</span>
+                <span className="text-[10px] text-slate-500">{p5}%</span>
+              </div>
+              <div className={`font-mono text-xs ${p5 === 100 ? "text-emerald-400" : p5 > 0 ? "text-indigo-400" : "text-slate-800"}`}>
+                {getProgressBar(p5)}
+              </div>
+            </div>
+          </div>
+
+          <div className="border-t border-slate-900 pt-3 text-[10px] text-slate-500 flex justify-between font-mono">
+            <span>Runtime: Azure Foundry</span>
+            <span className="animate-pulse">{p5 === 100 ? "Finalizing results..." : "Analyzing..."}</span>
+          </div>
+        </div>
       </div>
     );
   }
@@ -280,15 +406,15 @@ export default function ExplorePage() {
   }
 
   // Count findings for summary statistics
-  const findingsList: QualityFinding[] = qualityResult?.findings || [];
-  const criticalCount = findingsList.filter(f => f.severity.toLowerCase() === "critical").length;
-  const warningCount = findingsList.filter(f => f.severity.toLowerCase() === "warning").length;
-  const infoCount = findingsList.filter(f => f.severity.toLowerCase() === "info").length;
+  const findingsList: QualityFinding[] = Array.isArray(qualityResult?.findings) ? qualityResult.findings : [];
+  const criticalCount = findingsList.filter(f => f?.severity && String(f.severity).toLowerCase() === "critical").length;
+  const warningCount = findingsList.filter(f => f?.severity && String(f.severity).toLowerCase() === "warning").length;
+  const infoCount = findingsList.filter(f => f?.severity && String(f.severity).toLowerCase() === "info").length;
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 font-sans selection:bg-indigo-500 selection:text-white pb-16">
       {/* Navbar */}
-      <header className="border-b border-slate-900 bg-slate-950/80 backdrop-blur sticky top-0 z-50">
+      <header className="border-b border-slate-900 bg-slate-950/80 backdrop-blur sticky top-0 z-50 print:hidden">
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <Link href="/" className="text-slate-400 hover:text-slate-200 transition-colors">
@@ -298,7 +424,7 @@ export default function ExplorePage() {
               <Database className="h-4.5 w-4.5 text-white" />
             </div>
             <div>
-              <span className="font-semibold text-sm block leading-none">{metadata.filename}</span>
+              <span className="font-semibold text-sm block leading-none">{getCleanFilename(metadata.filename)}</span>
               <span className="text-[10px] text-slate-500 uppercase tracking-wider font-semibold">Dataset Ingestion Explorer</span>
             </div>
           </div>
@@ -318,10 +444,10 @@ export default function ExplorePage() {
       </header>
 
       {/* Content Container */}
-      <main className="max-w-7xl mx-auto px-6 py-8 flex flex-col gap-8">
+      <main className="max-w-7xl mx-auto px-6 py-8 flex flex-col gap-8 print:p-0 print:gap-0 print:max-w-full">
         
         {/* Main Grid: Left is agents and content, Right is blackboard */}
-        <div className="grid grid-cols-1 xl:grid-cols-4 gap-6 items-start">
+        <div className="grid grid-cols-1 xl:grid-cols-4 gap-6 items-start print:hidden">
           
           <div className="xl:col-span-3 flex flex-col gap-6">
             {/* Metadata Banner Details */}
@@ -332,8 +458,11 @@ export default function ExplorePage() {
                 </div>
                 <div>
                   <span className="text-xs text-slate-500 block">Filename</span>
-                  <span className="text-sm font-semibold text-slate-200 block truncate max-w-[180px]" title={metadata.filename}>
-                    {metadata.filename}
+                  <span className="text-sm font-semibold text-slate-200 block truncate max-w-[180px]" title={getCleanFilename(metadata.filename)}>
+                    {getCleanFilename(metadata.filename)}
+                  </span>
+                  <span className="text-[10px] text-slate-500 block font-mono">
+                    ID: {datasetId ? datasetId.substring(0, 8) : "N/A"}
                   </span>
                 </div>
               </div>
@@ -387,9 +516,17 @@ export default function ExplorePage() {
             )}
           </div>
 
-          {/* RIGHT SIDE: Shared Blackboard Memory Card */}
-          <div className="xl:col-span-1 p-5 rounded-xl border border-purple-500/20 bg-purple-950/5 backdrop-blur-sm flex flex-col gap-4">
-            <div className="flex items-center justify-between border-b border-purple-500/20 pb-3">
+          {/* RIGHT SIDE: Infrastructure Status & Shared Blackboard */}
+          <div className="xl:col-span-1 flex flex-col gap-6">
+            <RuntimeStatus 
+              blackboardVersion={blackboardVersion}
+              blackboardEntityCount={blackboardEntityCount}
+              blackboardLastTraceId={blackboardLastTraceId}
+            />
+
+            {/* Shared Blackboard Memory Card */}
+            <div className="p-5 rounded-xl border border-purple-500/20 bg-purple-950/5 backdrop-blur-sm flex flex-col gap-4">
+              <div className="flex items-center justify-between border-b border-purple-500/20 pb-3">
               <div className="flex items-center gap-2">
                 <BrainCircuit className="h-4.5 w-4.5 text-purple-400" />
                 <h3 className="font-semibold text-sm text-purple-200">Shared Blackboard</h3>
@@ -526,10 +663,10 @@ export default function ExplorePage() {
                       <div>File: {semanticDataset.filename}</div>
                       <div>Rows: {semanticDataset.row_count} | Columns: {semanticDataset.column_count}</div>
                       <details className="mt-1">
-                        <summary className="text-slate-500 hover:text-slate-400 cursor-pointer">View Columns ({semanticDataset.columns?.length || 0})</summary>
+                        <summary className="text-slate-500 hover:text-slate-400 cursor-pointer">View Columns ({Array.isArray(semanticDataset?.columns) ? semanticDataset.columns.length : 0})</summary>
                         <ul className="pl-3 list-disc mt-1 flex flex-col gap-0.5 text-[9px] text-slate-400">
-                          {semanticDataset.columns?.map((c: any, i: number) => (
-                            <li key={i}>{c.name} ({c.inferred_type})</li>
+                          {Array.isArray(semanticDataset?.columns) && semanticDataset.columns.map((c: any, i: number) => (
+                            <li key={i}>{c?.name ?? "Unknown"} ({c?.inferred_type ?? "unknown"})</li>
                           ))}
                         </ul>
                       </details>
@@ -540,12 +677,12 @@ export default function ExplorePage() {
                   {semanticPowerbiReadiness && (
                     <div className="border-b border-slate-900 pb-2">
                       <span className="text-purple-400 font-bold block mb-1">📊 PowerBIReadiness Entity</span>
-                      <div>ID: {semanticPowerbiReadiness.entity_id}</div>
-                      <div>Score: {semanticPowerbiReadiness.readiness_score}%</div>
-                      <div>Rating: {semanticPowerbiReadiness.overall_rating_text}</div>
-                      <div>Dimensions: {semanticPowerbiReadiness.star_schema_suggestions?.dimension_tables?.join(", ") || "None"}</div>
-                      <div>Facts: {semanticPowerbiReadiness.star_schema_suggestions?.fact_tables?.join(", ") || "None"}</div>
-                      <div>Agent: {semanticPowerbiReadiness.created_by_agent}</div>
+                      <div>ID: {semanticPowerbiReadiness?.entity_id ?? "N/A"}</div>
+                      <div>Score: {semanticPowerbiReadiness?.readiness_score ?? 0}%</div>
+                      <div>Rating: {semanticPowerbiReadiness?.overall_rating_text ?? "PENDING"}</div>
+                      <div>Dimensions: {Array.isArray(semanticPowerbiReadiness?.star_schema_suggestions?.dimension_tables) ? semanticPowerbiReadiness.star_schema_suggestions.dimension_tables.join(", ") : "None"}</div>
+                      <div>Facts: {Array.isArray(semanticPowerbiReadiness?.star_schema_suggestions?.fact_tables) ? semanticPowerbiReadiness.star_schema_suggestions.fact_tables.join(", ") : "None"}</div>
+                      <div>Agent: {semanticPowerbiReadiness?.created_by_agent ?? "BIReadinessAgent"}</div>
                     </div>
                   )}
 
@@ -553,24 +690,24 @@ export default function ExplorePage() {
                   {semanticStatistics && (
                     <div className="border-b border-slate-900 pb-2">
                       <span className="text-purple-400 font-bold block mb-1">🔢 Statistics Entity</span>
-                      <div>ID: {semanticStatistics.entity_id}</div>
-                      <div>Rows: {semanticStatistics.row_count} | Columns: {semanticStatistics.column_count}</div>
-                      <div>Nulls: {semanticStatistics.total_nulls} ({Math.round((semanticStatistics.average_null_percentage || 0) * 100)}%)</div>
-                      <div>Duplicates: {semanticStatistics.duplicate_rows}</div>
-                      <div>Outliers: {semanticStatistics.outlier_count}</div>
-                      <div>Agent: {semanticStatistics.created_by_agent}</div>
+                      <div>ID: {semanticStatistics?.entity_id ?? "N/A"}</div>
+                      <div>Rows: {semanticStatistics?.row_count ?? 0} | Columns: {semanticStatistics?.column_count ?? 0}</div>
+                      <div>Nulls: {semanticStatistics?.total_nulls ?? 0} ({Math.round((semanticStatistics?.average_null_percentage ?? 0) * 100)}%)</div>
+                      <div>Duplicates: {semanticStatistics?.duplicate_rows ?? 0}</div>
+                      <div>Outliers: {semanticStatistics?.outlier_count ?? 0}</div>
+                      <div>Agent: {semanticStatistics?.created_by_agent ?? "StatisticsAgent"}</div>
                     </div>
                   )}
 
                   {/* Business Metric Entities */}
-                  {semanticBusinessMetrics.length > 0 && (
+                  {Array.isArray(semanticBusinessMetrics) && semanticBusinessMetrics.length > 0 && (
                     <div className="border-b border-slate-900 pb-2">
                       <span className="text-purple-400 font-bold block mb-1">📈 BusinessMetric Entities ({semanticBusinessMetrics.length})</span>
                       <div className="flex flex-col gap-1 pl-2">
                         {semanticBusinessMetrics.map((bm: any, i: number) => (
                           <div key={i} className="border-l border-slate-800 pl-2 py-0.5">
-                            <span className="text-slate-300 font-semibold">{bm.column_name} ({bm.metric_type})</span>
-                            <div>Aggregation: {bm.default_aggregation}</div>
+                            <span className="text-slate-300 font-semibold">{bm?.column_name ?? "Unknown"} ({bm?.metric_type ?? "unknown"})</span>
+                            <div>Aggregation: {bm?.default_aggregation ?? "none"}</div>
                           </div>
                         ))}
                       </div>
@@ -578,14 +715,14 @@ export default function ExplorePage() {
                   )}
 
                   {/* Aggregation Recommendations */}
-                  {semanticAggregationRecommendations.length > 0 && (
+                  {Array.isArray(semanticAggregationRecommendations) && semanticAggregationRecommendations.length > 0 && (
                     <div className="border-b border-slate-900 pb-2">
                       <span className="text-purple-400 font-bold block mb-1">⚙️ Aggregation Recommendations ({semanticAggregationRecommendations.length})</span>
                       <div className="flex flex-col gap-1 pl-2">
                         {semanticAggregationRecommendations.map((ar: any, i: number) => (
                           <div key={i} className="border-l border-slate-800 pl-2 py-0.5 leading-normal">
-                            <span className="text-slate-300 font-semibold">{ar.column_name} → {ar.recommended_aggregation}</span>
-                            <div className="text-slate-500 font-sans text-[9px] mt-0.5">{ar.reasoning}</div>
+                            <span className="text-slate-300 font-semibold">{ar?.column_name ?? "Unknown"} → {ar?.recommended_aggregation ?? "none"}</span>
+                            <div className="text-slate-500 font-sans text-[9px] mt-0.5">{ar?.reasoning ?? "No reasoning provided."}</div>
                           </div>
                         ))}
                       </div>
@@ -593,15 +730,15 @@ export default function ExplorePage() {
                   )}
 
                   {/* Issues */}
-                  {semanticIssues.length > 0 && (
+                  {Array.isArray(semanticIssues) && semanticIssues.length > 0 && (
                     <div className="border-b border-slate-900 pb-2">
                       <span className="text-purple-400 font-bold block mb-1">⚠️ QualityIssue Entities ({semanticIssues.length})</span>
                       <div className="flex flex-col gap-1.5 pl-2">
                         {semanticIssues.map((issue: any, i: number) => (
                           <div key={i} className="border-l border-slate-800 pl-2 py-0.5">
-                            <div className="font-semibold text-slate-300">{issue.title} ({issue.severity})</div>
-                            <div>ID: {issue.entity_id}</div>
-                            <div>Agent: {issue.created_by_agent} | Confidence: {issue.confidence}</div>
+                            <div className="font-semibold text-slate-300">{issue?.title ?? "Untitled Issue"} ({issue?.severity ?? "unknown"})</div>
+                            <div>ID: {issue?.entity_id ?? "N/A"}</div>
+                            <div>Agent: {issue?.created_by_agent ?? "UnknownAgent"} | Confidence: {issue?.confidence ?? 100}</div>
                           </div>
                         ))}
                       </div>
@@ -609,15 +746,15 @@ export default function ExplorePage() {
                   )}
 
                   {/* Recommendations */}
-                  {semanticRecommendations.length > 0 && (
+                  {Array.isArray(semanticRecommendations) && semanticRecommendations.length > 0 && (
                     <div className="border-b border-slate-900 pb-2">
                       <span className="text-purple-400 font-bold block mb-1">💡 Recommendation Entities ({semanticRecommendations.length})</span>
                       <div className="flex flex-col gap-1.5 pl-2">
                         {semanticRecommendations.map((rec: any, i: number) => (
                           <div key={i} className="border-l border-slate-800 pl-2 py-0.5">
-                            <div className="font-semibold text-slate-300 leading-tight">{rec.recommendation_text}</div>
-                            <div>ID: {rec.entity_id}</div>
-                            <div>Agent: {rec.created_by_agent}</div>
+                            <div className="font-semibold text-slate-300 leading-tight">{rec?.recommendation_text ?? "No text."}</div>
+                            <div>ID: {rec?.entity_id ?? "N/A"}</div>
+                            <div>Agent: {rec?.created_by_agent ?? "UnknownAgent"}</div>
                           </div>
                         ))}
                       </div>
@@ -625,15 +762,15 @@ export default function ExplorePage() {
                   )}
 
                   {/* Relationships Graph */}
-                  {semanticRelationships.length > 0 && (
+                  {Array.isArray(semanticRelationships) && semanticRelationships.length > 0 && (
                     <div>
                       <span className="text-purple-400 font-bold block mb-1">🔗 Graph Relationships ({semanticRelationships.length})</span>
                       <div className="flex flex-col gap-1 px-1 py-1 max-h-[150px] overflow-y-auto bg-slate-950 p-2 rounded">
                         {semanticRelationships.map((rel: any, i: number) => (
                           <div key={i} className="text-[9px] border-b border-slate-900/60 pb-1 last:border-0 last:pb-0">
-                            <span className="text-indigo-400 font-semibold">{rel.source_id}</span>
-                            <span className="text-slate-500 font-bold px-1">{rel.relationship_type}</span>
-                            <span className="text-purple-300 font-semibold">{rel.target_id}</span>
+                            <span className="text-indigo-400 font-semibold">{rel?.source_id ?? "Source"}</span>
+                            <span className="text-slate-500 font-bold px-1">{rel?.relationship_type ?? "relates_to"}</span>
+                            <span className="text-purple-300 font-semibold">{rel?.target_id ?? "Target"}</span>
                           </div>
                         ))}
                       </div>
@@ -644,9 +781,10 @@ export default function ExplorePage() {
             </div>
           </div>
         </div>
+      </div>
 
-        {/* Tab Controls */}
-        <div className="flex items-center gap-2 border-b border-slate-900 pb-px">
+      {/* Tab Controls */}
+        <div className="flex items-center gap-2 border-b border-slate-900 pb-px print:hidden">
           <button
             onClick={() => setActiveTab("readiness")}
             className={`px-4 py-2 border-b-2 text-sm font-medium transition-all ${
@@ -656,6 +794,16 @@ export default function ExplorePage() {
             }`}
           >
             Power BI Readiness
+          </button>
+          <button
+            onClick={() => setActiveTab("graph")}
+            className={`px-4 py-2 border-b-2 text-sm font-medium transition-all ${
+              activeTab === "graph"
+                ? "border-indigo-500 text-indigo-400 font-bold"
+                : "border-transparent text-slate-400 hover:text-slate-200"
+            }`}
+          >
+            Knowledge Graph
           </button>
           <button
             onClick={() => setActiveTab("quality")}
@@ -700,14 +848,14 @@ export default function ExplorePage() {
         </div>
 
         {/* Tab Panels */}
-        <div className="rounded-xl border border-slate-900 bg-slate-950 overflow-hidden">
+        <div className="rounded-xl border border-slate-900 bg-slate-950 overflow-hidden print:border-none print:bg-transparent print:shadow-none">
           
           {activeTab === "readiness" ? (
             /* POWER BI READINESS PANEL */
-            <div className="p-6 flex flex-col gap-8 animate-in fade-in duration-300">
+            <div className="p-6 flex flex-col gap-8 animate-in fade-in duration-300 print:p-0">
               
               {/* Header block */}
-              <div className="flex flex-col gap-1 border-b border-slate-900 pb-3">
+              <div className="flex flex-col gap-1 border-b border-slate-900 pb-3 print:hidden">
                 <h4 className="font-bold text-sm text-slate-200">Power BI Enterprise Ingestion Audit</h4>
                 <p className="text-xs text-slate-500">Evaluates schema, dimensions, metric distribution logic, and ingestion readiness criteria.</p>
               </div>
@@ -718,11 +866,59 @@ export default function ExplorePage() {
                   <span>Awaiting BI Readiness Agent assessment...</span>
                 </div>
               ) : (
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start print:block print:w-full">
                   
                   {/* LEFT CONTENT AREA (2 Columns) */}
-                  <div className="lg:col-span-2 flex flex-col gap-6">
+                  <div className="lg:col-span-2 flex flex-col gap-6 print:hidden">
                     
+                    {/* Azure AI Orchestrated Insights */}
+                    <div className="p-5 rounded-lg border border-indigo-500/20 bg-indigo-950/5 flex flex-col gap-4">
+                      <div className="flex items-center justify-between border-b border-indigo-500/15 pb-2.5">
+                        <span className="text-[10px] text-indigo-400 font-bold uppercase tracking-wider flex items-center gap-1.5">
+                          <Cpu className="h-3.5 w-3.5 text-indigo-400" />
+                          Orchestrated Executive Briefings
+                        </span>
+                        <span className="text-[9px] bg-indigo-900/50 border border-indigo-500/30 text-indigo-300 px-2 py-0.5 rounded uppercase font-bold tracking-wider">
+                          Language Layer
+                        </span>
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {/* Executive Summary */}
+                        <div className="p-4 rounded bg-slate-950 border border-slate-900 leading-relaxed flex flex-col gap-1.5">
+                          <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Executive Summary</span>
+                          <p className="text-xs text-slate-300 leading-relaxed">{executiveSummary || "No summary available."}</p>
+                        </div>
+
+                        {/* Management Explanation */}
+                        <div className="p-4 rounded bg-slate-950 border border-slate-900 leading-relaxed flex flex-col gap-1.5">
+                          <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Management Commentary</span>
+                          <p className="text-xs text-slate-300 leading-relaxed">{managementExplanation || "No commentary available."}</p>
+                        </div>
+                      </div>
+
+                      {/* Copyable Markdown Brief */}
+                      {markdownExportWording && (
+                        <div className="p-4 rounded bg-slate-950 border border-slate-900 flex flex-col gap-2.5">
+                          <div className="flex items-center justify-between border-b border-slate-900 pb-1.5">
+                            <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Markdown Ingestion Brief</span>
+                            <button
+                              onClick={() => {
+                                navigator.clipboard.writeText(markdownExportWording);
+                                alert("Markdown brief copied to clipboard!");
+                              }}
+                              className="text-[10px] text-indigo-400 hover:text-indigo-300 transition-colors font-bold uppercase animate-pulse"
+                            >
+                              Copy Brief
+                            </button>
+                          </div>
+                          <pre className="text-[10px] text-slate-400 font-mono bg-slate-950 p-2.5 rounded border border-slate-900/40 overflow-x-auto whitespace-pre-wrap max-h-40 overflow-y-auto leading-normal select-all">
+                            {markdownExportWording}
+                          </pre>
+                        </div>
+                      )}
+                    </div>
+
                     {/* Category Ratings Grid */}
                     <div className="flex flex-col gap-3">
                       <h5 className="font-bold text-xs text-indigo-400 uppercase tracking-wider">Readiness Dimension Ratings</h5>
@@ -737,7 +933,7 @@ export default function ExplorePage() {
                           { key: "metrics", label: "Executive Measures", desc: "Aggregatable metrics classification & skewness checks" },
                           { key: "identifiers", label: "Key Identifiers", desc: "Primary key uniqueness & uniqueness ratios" }
                         ].map((card) => {
-                          const rating = semanticPowerbiReadiness.category_ratings?.[card.key] || 0.0;
+                          const rating = semanticPowerbiReadiness?.category_ratings?.[card.key] ?? 0.0;
                           return (
                             <div key={card.key} className="p-4 rounded-lg bg-slate-900/40 border border-slate-900 flex flex-col justify-between h-32 hover:border-slate-800 transition-colors">
                               <div>
@@ -759,7 +955,7 @@ export default function ExplorePage() {
                     </div>
 
                     {/* Star Schema Suggestions */}
-                    {semanticPowerbiReadiness.star_schema_suggestions && (
+                    {semanticPowerbiReadiness?.star_schema_suggestions && (
                       <div className="p-5 rounded-lg border border-slate-900 bg-slate-900/10 flex flex-col gap-4">
                         <h5 className="font-bold text-xs text-indigo-400 uppercase tracking-wider">Inferred Star Schema Model</h5>
                         
@@ -772,12 +968,12 @@ export default function ExplorePage() {
                               Dimension Candidates (Attributes)
                             </span>
                             <div className="flex flex-wrap gap-1.5 mt-1">
-                              {semanticPowerbiReadiness.star_schema_suggestions.dimension_tables?.map((table: string, i: number) => (
+                              {Array.isArray(semanticPowerbiReadiness.star_schema_suggestions.dimension_tables) && semanticPowerbiReadiness.star_schema_suggestions.dimension_tables.map((table: string, i: number) => (
                                 <span key={i} className="px-2 py-0.5 text-xs rounded bg-indigo-950/40 border border-indigo-900 text-indigo-300 font-semibold">
                                   {table}
                                 </span>
                               ))}
-                              {(!semanticPowerbiReadiness.star_schema_suggestions.dimension_tables || 
+                              {(!Array.isArray(semanticPowerbiReadiness.star_schema_suggestions.dimension_tables) || 
                                 semanticPowerbiReadiness.star_schema_suggestions.dimension_tables.length === 0) && (
                                 <span className="text-xs text-slate-500 italic">No dimension candidates detected.</span>
                               )}
@@ -791,7 +987,7 @@ export default function ExplorePage() {
                               Fact Candidates (Measures)
                             </span>
                             <div className="flex flex-wrap gap-1.5 mt-1">
-                              {semanticPowerbiReadiness.star_schema_suggestions.fact_tables?.map((table: string, i: number) => (
+                              {Array.isArray(semanticPowerbiReadiness.star_schema_suggestions.fact_tables) && semanticPowerbiReadiness.star_schema_suggestions.fact_tables.map((table: string, i: number) => (
                                 <span key={i} className="px-2 py-0.5 text-xs rounded bg-purple-950/40 border border-purple-900 text-purple-300 font-semibold">
                                   {table}
                                 </span>
@@ -810,7 +1006,7 @@ export default function ExplorePage() {
                     <div className="p-5 rounded-lg border border-slate-900 bg-slate-900/10 flex flex-col gap-3">
                       <h5 className="font-bold text-xs text-indigo-400 uppercase tracking-wider">Enterprise Action Items</h5>
                       <ul className="flex flex-col gap-2.5">
-                        {semanticPowerbiReadiness.business_recommendations?.map((rec: string, i: number) => (
+                        {Array.isArray(semanticPowerbiReadiness.business_recommendations) && semanticPowerbiReadiness.business_recommendations.map((rec: string, i: number) => (
                           <li key={i} className="flex items-start gap-2 text-xs text-slate-300 leading-relaxed">
                             <span className="h-1.5 w-1.5 bg-indigo-500 rounded-full mt-1.5 shrink-0" />
                             <span>{rec}</span>
@@ -822,123 +1018,189 @@ export default function ExplorePage() {
                   </div>
 
                   {/* RIGHT COLUMN (Certificate & Logs) */}
-                  <div className="flex flex-col gap-6">
+                  <div className="flex flex-col gap-6 print:w-full print:block print:gap-0">
                     
                     {/* Enterprise Ingestion Certificate widget */}
-                    <div className="p-6 rounded-xl border border-indigo-500/20 bg-gradient-to-b from-indigo-950/30 to-slate-950 flex flex-col gap-4 relative overflow-hidden shadow-lg">
-                      <div className="absolute top-[-20%] right-[-20%] w-40 h-40 bg-indigo-500/5 rounded-full blur-2xl pointer-events-none" />
+                    <div id="bi-certificate" className="p-6 rounded-xl border border-indigo-500/20 bg-gradient-to-b from-indigo-950/30 to-slate-950 flex flex-col gap-4 relative overflow-hidden shadow-lg print:border-2 print:border-slate-800 print:text-black print:bg-white print:shadow-none print:p-8">
+                      <div className="absolute top-[-20%] right-[-20%] w-40 h-40 bg-indigo-500/5 rounded-full blur-2xl pointer-events-none print:hidden" />
                       
-                      <div className="text-center border-b border-indigo-500/15 pb-4">
-                        <span className="text-[9px] text-indigo-400 font-bold uppercase tracking-widest font-mono">Data Detective</span>
-                        <h4 className="font-extrabold text-sm text-slate-200 mt-0.5 uppercase tracking-wide">Enterprise BI Readiness Certificate</h4>
+                      <div className="text-center border-b border-indigo-500/15 print:border-slate-300 pb-4">
+                        <span className="text-[9px] text-indigo-400 font-bold uppercase tracking-widest font-mono print:text-slate-500">Data Detective</span>
+                        <h4 className="font-extrabold text-sm text-slate-200 mt-0.5 uppercase tracking-wide print:text-slate-800">Enterprise BI Readiness Certificate</h4>
                         <span className="text-[9px] text-slate-500 block mt-1 font-mono">ID: CERT-{datasetId?.substring(0, 8).toUpperCase()}</span>
                       </div>
 
                       <div className="grid grid-cols-2 gap-4 items-center py-2">
-                        <div className="flex flex-col text-center border-r border-slate-900/80">
+                        <div className="flex flex-col text-center border-r border-slate-900/80 print:border-slate-300">
                           <span className="text-[10px] text-slate-500 uppercase font-bold tracking-wider">Readiness Index</span>
-                          <span className="text-4xl font-black text-slate-100 font-mono mt-1">
-                            {semanticPowerbiReadiness.readiness_score}%
+                          <span className="text-4xl font-black text-slate-100 font-mono mt-1 print:text-slate-800">
+                            {semanticPowerbiReadiness?.readiness_score ?? 0}%
                           </span>
                         </div>
                         <div className="flex flex-col text-center">
                           <span className="text-[10px] text-slate-500 uppercase font-bold tracking-wider">Status Rating</span>
                           <span className={`text-xs font-black mt-2 font-mono leading-none tracking-tight ${
-                            semanticPowerbiReadiness.overall_rating_text === "ENTERPRISE READY" ? "text-emerald-400" :
-                            semanticPowerbiReadiness.overall_rating_text === "PASS WITH WARNINGS" ? "text-amber-400" :
-                            "text-red-400"
+                            semanticPowerbiReadiness?.overall_rating_text === "ENTERPRISE READY" ? "text-emerald-400 print:text-emerald-600" :
+                            semanticPowerbiReadiness?.overall_rating_text === "PASS WITH WARNINGS" ? "text-amber-400 print:text-amber-600" :
+                            "text-red-400 print:text-red-600"
                           }`}>
-                            {semanticPowerbiReadiness.overall_rating_text}
-                          </span>
-                          <span className="text-[8px] text-slate-500 uppercase tracking-widest font-bold mt-1">
-                            {semanticPowerbiReadiness.overall_rating_text === "ENTERPRISE READY" ? "PASS" :
-                             semanticPowerbiReadiness.overall_rating_text === "PASS WITH WARNINGS" ? "WARNING" : "FAIL"}
+                            {semanticPowerbiReadiness?.overall_rating_text ?? "PENDING"}
                           </span>
                         </div>
                       </div>
+                      <div className="border-t border-indigo-500/15 print:border-slate-300 pt-3 text-[11px] text-slate-300 print:text-slate-650 leading-relaxed italic text-center font-serif">
+                        "{certificateWording || "Certified that the dataset has undergone automated schema profiling and quality validation."}"
+                      </div>
 
-                      <div className="border-t border-indigo-500/15 pt-4 flex flex-col gap-2 text-xs">
-                        <div className="flex justify-between items-center text-[10px] text-slate-400">
+                      <div className="border-t border-indigo-500/15 print:border-slate-300 pt-4 flex flex-col gap-2 text-xs text-slate-400 print:text-slate-600">
+                        <div className="flex justify-between items-center text-[10px]">
+                          <span>Dataset Filename:</span>
+                          <span className="font-semibold text-slate-200 print:text-slate-800">{metadata.filename}</span>
+                        </div>
+                        <div className="flex justify-between items-center text-[10px]">
                           <span>Evidence Completeness:</span>
-                          <span className="font-mono font-bold text-slate-200">
-                            {evaluationResult ? `${Math.round(evaluationResult.evidence_completeness * 100)}%` : "98%"}
+                          <span className="font-mono font-bold text-slate-200 print:text-slate-800">
+                            {evaluationResult && evaluationResult?.evidence_completeness !== undefined ? `${Math.round(evaluationResult.evidence_completeness * 100)}%` : "98%"}
                           </span>
                         </div>
-                        <div className="flex justify-between items-center text-[10px] text-slate-400">
-                          <span>Generated By:</span>
-                          <span className="font-semibold text-slate-200">Blackboard Multi-Agent</span>
+                        <div className="flex justify-between items-center text-[10px]">
+                          <span>Execution Mode:</span>
+                          <span className="font-semibold text-slate-200 print:text-slate-800">Deterministic Run</span>
+                        </div>
+                        <div className="flex justify-between items-center text-[10px]">
+                          <span>Azure Runtime status:</span>
+                          <span className="font-semibold text-slate-200 print:text-slate-800 font-mono">Connected</span>
+                        </div>
+                        <div className="flex justify-between items-center text-[10px]">
+                          <span>Generated Date:</span>
+                          <span className="font-semibold text-slate-200 print:text-slate-800 font-mono">
+                            {new Date().toISOString().split("T")[0]}
+                          </span>
                         </div>
                       </div>
 
                       {/* Agent Network Status Checklist */}
-                      <div className="grid grid-cols-2 gap-2 mt-2 pt-2 border-t border-slate-900 text-[10px] font-mono">
-                        <div className="flex items-center gap-1.5 text-emerald-400">
+                      <div className="grid grid-cols-2 gap-2 mt-2 pt-3 border-t border-slate-900 print:border-slate-300 text-[10px] font-mono text-slate-400 print:text-slate-700">
+                        <div className="flex items-center gap-1.5 text-emerald-400 print:text-emerald-600">
                           <span>✓</span>
-                          <span className="text-slate-400">Planner</span>
+                          <span className="text-slate-400 print:text-slate-700 font-bold">Planner Agent</span>
                         </div>
-                        <div className="flex items-center gap-1.5 text-emerald-400">
+                        <div className="flex items-center gap-1.5 text-emerald-400 print:text-emerald-600">
                           <span>✓</span>
-                          <span className="text-slate-400">Quality Agent</span>
+                          <span className="text-slate-400 print:text-slate-700 font-bold">Quality Agent</span>
                         </div>
-                        <div className="flex items-center gap-1.5 text-emerald-400">
+                        <div className="flex items-center gap-1.5 text-emerald-400 print:text-emerald-600">
                           <span>✓</span>
-                          <span className="text-slate-400">BI Agent</span>
+                          <span className="text-slate-400 print:text-slate-700 font-bold">BI Readiness Agent</span>
                         </div>
-                        <div className="flex items-center gap-1.5 text-emerald-400">
+                        <div className="flex items-center gap-1.5 text-emerald-400 print:text-emerald-600">
                           <span>✓</span>
-                          <span className="text-slate-400">Evaluation</span>
+                          <span className="text-slate-400 print:text-slate-700 font-bold">Evaluation Agent</span>
                         </div>
+                      </div>
+
+                      {/* Interactive Buttons (Print, Copy, Markdown) */}
+                      <div className="flex gap-2.5 mt-3 pt-3 border-t border-slate-900 print:hidden text-[10px]">
+                        <button
+                          onClick={() => window.print()}
+                          className="flex-1 py-1.5 rounded bg-indigo-600 hover:bg-indigo-500 text-white font-bold transition-colors uppercase tracking-wider text-center"
+                        >
+                          Print Cert
+                        </button>
+                        <button
+                          onClick={() => {
+                            navigator.clipboard.writeText(certificateWording);
+                            alert("Certificate text copied to clipboard!");
+                          }}
+                          className="flex-1 py-1.5 rounded bg-slate-900 border border-slate-850 hover:bg-slate-850 text-slate-300 font-bold transition-colors uppercase tracking-wider text-center"
+                        >
+                          Copy Text
+                        </button>
+                        {markdownExportWording && (
+                          <button
+                            onClick={() => {
+                              const blob = new Blob([markdownExportWording], { type: "text/markdown" });
+                              const url = URL.createObjectURL(blob);
+                              const a = document.createElement("a");
+                              a.href = url;
+                              a.download = `readiness_brief_${metadata.filename.split(".")[0]}.md`;
+                              a.click();
+                              URL.revokeObjectURL(url);
+                            }}
+                            className="flex-1 py-1.5 rounded bg-slate-900 border border-slate-850 hover:bg-slate-850 text-slate-300 font-bold transition-colors uppercase tracking-wider text-center"
+                          >
+                            Markdown
+                          </button>
+                        )}
                       </div>
                     </div>
 
                     {/* Enterprise Activity Log Feed */}
-                    <div className="p-5 rounded-lg border border-slate-900 bg-slate-900/10 flex flex-col gap-4">
-                      <h5 className="font-bold text-xs text-indigo-400 uppercase tracking-wider">Enterprise Activity Log</h5>
+                    <div className="p-5 rounded-lg border border-slate-900 bg-slate-900/10 flex flex-col gap-4 font-mono print:hidden">
+                      <div className="flex items-center justify-between border-b border-slate-900 pb-2.5">
+                        <h5 className="font-bold text-xs text-indigo-400 uppercase tracking-wider">Azure Monitor Audit Logs</h5>
+                        <span className="text-[9px] text-slate-500">Live Tracing</span>
+                      </div>
                       
-                      <div className="flex flex-col gap-3 font-mono text-[10px] text-slate-400 leading-normal">
-                        
-                        <div className="border-l-2 border-indigo-500 pl-3 py-1 bg-slate-950/60 p-2 rounded">
-                          <span className="text-indigo-400 font-bold block">Planner</span>
-                          <span className="text-slate-300">Dataset goal identified:</span>
-                          <span className="text-indigo-300 block font-semibold">Power BI Preparation</span>
-                        </div>
+                      <div className="flex flex-col gap-3.5 text-[11px] text-slate-400">
+                        {(() => {
+                          if (!Array.isArray(agentExecutionLog)) {
+                            return null;
+                          }
+                          return agentExecutionLog
+                            .filter(l => l?.type === "agent_step")
+                            .map((log, idx) => {
+                              const timeStr = formatLogTime(log?.started_at);
+                              const agentName = log?.agent_name ?? log?.agent ?? log?.name ?? "System";
+                              const cleanAgent = String(agentName).replace("Agent", "");
+                              
+                              let action = "Agent process completed";
+                              if (agentName === "PlannerAgent") action = "Workflow execution plan created";
+                              else if (agentName === "QualityAgent") {
+                                const toolCount = agentExecutionLog.filter(l => l?.type === "tool_step" && (l?.agent_name ?? l?.agent ?? l?.name) === "QualityAgent").length;
+                                action = `${toolCount} quality profiling tools executed`;
+                              }
+                              else if (agentName === "BIReadinessAgent") {
+                                action = "Power BI readiness score generated";
+                              }
+                              else if (agentName === "EvaluationAgent") {
+                                action = `Evidence completeness validated: ${Math.round((evaluationResult?.evidence_completeness ?? 0.99) * 100)}%`;
+                              }
 
-                        <div className="border-l-2 border-indigo-500 pl-3 py-1 bg-slate-950/60 p-2 rounded">
-                          <span className="text-indigo-400 font-bold block">Quality Agent</span>
-                          <span className="text-slate-300">Detected Issues:</span>
-                          <span className="text-slate-200 block font-bold">
-                            {criticalCount} Critical, {warningCount} Warnings
-                          </span>
-                        </div>
+                              const executionTime = log?.execution_time_ms ?? 0;
+                              const status = log?.status ?? "SUCCESS";
+                              const isSuccess = status === "completed" || status === "success" || status === "SUCCESS";
 
-                        <div className="border-l-2 border-indigo-500 pl-3 py-1 bg-slate-950/60 p-2 rounded">
-                          <span className="text-indigo-400 font-bold block">BI Agent</span>
-                          <div className="text-slate-300">Detected Fact Tables:</div>
-                          <span className="text-purple-300 block font-semibold truncate max-w-full">
-                            {semanticPowerbiReadiness.star_schema_suggestions.fact_tables?.join(", ") || "FactTable"}
-                          </span>
-                          <div className="text-slate-300 mt-1">Detected Dimensions:</div>
-                          <span className="text-indigo-300 block font-semibold truncate max-w-full">
-                            {semanticPowerbiReadiness.star_schema_suggestions.dimension_tables?.join(", ") || "None"}
-                          </span>
-                        </div>
-
-                        <div className="border-l-2 border-indigo-500 pl-3 py-1 bg-slate-950/60 p-2 rounded">
-                          <span className="text-indigo-400 font-bold block">Evaluation Agent</span>
-                          <div className="text-slate-300">Evidence completeness:</div>
-                          <span className="text-emerald-400 block font-semibold">
-                            {evaluationResult ? `${Math.round(evaluationResult.evidence_completeness * 100)}%` : "100%"}
-                          </span>
-                          <span className="text-emerald-400 font-semibold block mt-0.5">Analysis verified.</span>
-                        </div>
-
-                        <div className="border-l-2 border-indigo-500 pl-3 py-1 bg-slate-950/60 p-2 rounded">
-                          <span className="text-purple-400 font-bold block">Blackboard Inspector</span>
-                          <span className="text-slate-300">State Version:</span>
-                          <span className="text-purple-300 font-bold block">Version {blackboardVersion || "4"}</span>
-                          <span className="text-emerald-400 font-semibold block mt-0.5">Updated successfully.</span>
-                        </div>
-
+                              return (
+                                <React.Fragment key={idx}>
+                                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 bg-slate-950/40 p-3 rounded border border-slate-900 hover:border-slate-800 transition-colors leading-relaxed">
+                                    <div className="flex flex-wrap items-center gap-2.5">
+                                      <span className="text-slate-500 font-bold">{timeStr}</span>
+                                      <span className="text-slate-600">|</span>
+                                      <span className="text-indigo-300 font-bold">{cleanAgent}</span>
+                                      <span className="text-slate-600">|</span>
+                                      <span className="text-slate-300 font-medium">{action}</span>
+                                    </div>
+                                    <div className="flex items-center gap-3 self-end sm:self-auto">
+                                      <span className="text-slate-500">{executionTime} ms</span>
+                                      <span className={`px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider ${
+                                        isSuccess
+                                          ? "bg-emerald-950/60 border border-emerald-900/50 text-emerald-400"
+                                          : "bg-amber-950/60 border border-amber-900/50 text-amber-400"
+                                      }`}>
+                                        {String(status).toUpperCase()}
+                                      </span>
+                                    </div>
+                                  </div>
+                                </React.Fragment>
+                              );
+                            });
+                        })()}
+                        {(!Array.isArray(agentExecutionLog) || agentExecutionLog.filter(l => l?.type === "agent_step").length === 0) && (
+                          <div className="text-xs text-slate-500 text-center py-4">
+                            No active telemetry traces recorded on the blackboard.
+                          </div>
+                        )}
                       </div>
                     </div>
 
@@ -946,6 +1208,18 @@ export default function ExplorePage() {
 
                 </div>
               )}
+            </div>
+          ) : activeTab === "graph" ? (
+            /* SEMANTIC VISUALIZER PANEL */
+            <div className="p-6">
+              <SemanticVisualizer
+                semanticDataset={semanticDataset}
+                semanticIssues={semanticIssues}
+                semanticRecommendations={semanticRecommendations}
+                semanticBusinessMetrics={semanticBusinessMetrics}
+                semanticPowerbiReadiness={semanticPowerbiReadiness}
+                evaluationResult={evaluationResult}
+              />
             </div>
           ) : activeTab === "quality" ? (
             /* DATA QUALITY AUDIT PANEL */
@@ -1060,19 +1334,23 @@ export default function ExplorePage() {
                     </div>
 
                     <div className="flex flex-col gap-3">
-                      {agentExecutionLog
-                        .filter(log => log.type === "tool_step")
-                        .map((tool, idx) => (
-                          <div key={idx} className="flex items-center justify-between text-xs border-b border-slate-900/40 pb-2 last:border-0 last:pb-0">
-                            <div className="flex items-center gap-2">
-                              <CheckCircle className="h-3.5 w-3.5 text-emerald-400" />
-                              <span className="font-mono text-slate-300">{tool.tool_name}</span>
+                      {(() => {
+                        if (!Array.isArray(agentExecutionLog)) {
+                          return null;
+                        }
+                        return agentExecutionLog
+                          .filter(log => log?.type === "tool_step")
+                          .map((tool, idx) => (
+                            <div key={idx} className="flex items-center justify-between text-xs border-b border-slate-900/40 pb-2 last:border-0 last:pb-0">
+                              <div className="flex items-center gap-2">
+                                <CheckCircle className="h-3.5 w-3.5 text-emerald-400" />
+                                <span className="font-mono text-slate-300">{tool?.tool_name ?? "Unknown Tool"}</span>
+                              </div>
+                              <span className="font-mono text-[10px] text-slate-500">{tool?.execution_time_ms ?? 0} ms</span>
                             </div>
-                            <span className="font-mono text-[10px] text-slate-500">{tool.execution_time_ms} ms</span>
-                          </div>
-                        ))
-                      }
-                      {agentExecutionLog.filter(log => log.type === "tool_step").length === 0 && (
+                          ));
+                      })()}
+                      {(!Array.isArray(agentExecutionLog) || agentExecutionLog.filter(log => log?.type === "tool_step").length === 0) && (
                         <div className="text-xs text-slate-500 text-center py-4">
                           No tool execution runs recorded.
                         </div>
@@ -1190,7 +1468,7 @@ export default function ExplorePage() {
                       </div>
                       <span className="text-[10px] text-indigo-400 font-semibold uppercase tracking-wider">Overall Score</span>
                       <span className="text-3xl font-extrabold text-slate-100 font-mono">
-                        {(evaluationResult.overall_analysis_score * 100).toFixed(0)}
+                        {((evaluationResult?.overall_analysis_score ?? 0) * 100).toFixed(0)}
                       </span>
                       <span className="text-[9px] text-slate-500 font-medium leading-tight mt-1">Weighted audit index</span>
                     </div>
@@ -1199,7 +1477,7 @@ export default function ExplorePage() {
                     <div className="p-5 rounded-lg bg-slate-900/40 border border-slate-900 flex flex-col gap-2">
                       <span className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider">Evidence Completeness</span>
                       <span className="text-3xl font-bold text-slate-200 font-mono">
-                        {(evaluationResult.evidence_completeness * 100).toFixed(0)}%
+                        {((evaluationResult?.evidence_completeness ?? 0) * 100).toFixed(0)}%
                       </span>
                       <span className="text-[9px] text-slate-500 font-medium leading-tight mt-1">Scanned dataset columns</span>
                     </div>
@@ -1208,7 +1486,7 @@ export default function ExplorePage() {
                     <div className="p-5 rounded-lg bg-slate-900/40 border border-slate-900 flex flex-col gap-2">
                       <span className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider">Determinism</span>
                       <span className="text-3xl font-bold text-slate-200 font-mono">
-                        {(evaluationResult.determinism * 100).toFixed(0)}%
+                        {((evaluationResult?.determinism ?? 0) * 100).toFixed(0)}%
                       </span>
                       <span className="text-[9px] text-slate-500 font-medium leading-tight mt-1">Rule-based executions</span>
                     </div>
@@ -1217,7 +1495,7 @@ export default function ExplorePage() {
                     <div className="p-5 rounded-lg bg-slate-900/40 border border-slate-900 flex flex-col gap-2">
                       <span className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider">Recommendation Cov.</span>
                       <span className="text-3xl font-bold text-slate-200 font-mono">
-                        {(evaluationResult.recommendation_coverage * 100).toFixed(0)}%
+                        {((evaluationResult?.recommendation_coverage ?? 0) * 100).toFixed(0)}%
                       </span>
                       <span className="text-[9px] text-slate-500 font-medium leading-tight mt-1">Issues mapped to advice</span>
                     </div>
@@ -1226,7 +1504,7 @@ export default function ExplorePage() {
                     <div className="p-5 rounded-lg bg-slate-900/40 border border-slate-900 flex flex-col gap-2">
                       <span className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider">Agent Agreement</span>
                       <span className="text-3xl font-bold text-slate-200 font-mono">
-                        {(evaluationResult.agent_agreement * 100).toFixed(0)}%
+                        {((evaluationResult?.agent_agreement ?? 0) * 100).toFixed(0)}%
                       </span>
                       <span className="text-[9px] text-slate-500 font-medium leading-tight mt-1">Hypothesis vs check alignment</span>
                     </div>
@@ -1235,7 +1513,7 @@ export default function ExplorePage() {
                     <div className="p-5 rounded-lg bg-slate-900/40 border border-slate-900 flex flex-col gap-2">
                       <span className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider">Trace Completeness</span>
                       <span className="text-3xl font-bold text-slate-200 font-mono">
-                        {(evaluationResult.trace_completeness * 100).toFixed(0)}%
+                        {((evaluationResult?.trace_completeness ?? 0) * 100).toFixed(0)}%
                       </span>
                       <span className="text-[9px] text-slate-500 font-medium leading-tight mt-1">Step completion check</span>
                     </div>

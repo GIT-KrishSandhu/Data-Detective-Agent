@@ -1,103 +1,281 @@
-# Data Detective
+# Data Detective Agent
 
 [![Microsoft Agents League Hackathon](https://img.shields.io/badge/Microsoft%20Hackathon-Agents%20League-blue.svg)](https://github.com/GIT-KrishSandhu/Data-Detective-Agent)
-[![Python Version](https://img.shields.io/badge/Python-3.12-blue.svg)](https://www.python.org/)
-[![Next.js Version](https://img.shields.io/badge/Next.js-16.2.7-black.svg)](https://nextjs.org/)
-[![Build Status](https://img.shields.io/badge/Build-Passing-emerald.svg)]()
-[![Determinism Index](https://img.shields.io/badge/Determinism-100%25-emerald.svg)]()
+[![Reasoning Agent](https://img.shields.io/badge/Track-Reasoning%20Agent-purple.svg)]()
+[![Azure AI Foundry](https://img.shields.io/badge/Azure%20AI-Foundry-blue.svg)]()
+[![Microsoft Foundry IQ](https://img.shields.io/badge/Grounded%20With-Microsoft%20Foundry%20IQ-0078D4.svg)]()
+[![Python](https://img.shields.io/badge/Python-3.12-blue.svg)]()
+[![Next.js](https://img.shields.io/badge/Next.js-16-black.svg)]()
+[![Deterministic](https://img.shields.io/badge/Execution-Deterministic-16a34a.svg)]()
 
-> **Enterprise AI agents that audit datasets before they reach Power BI.**
-
-Data Detective is a **Semantic Blackboard Multi-Agent Enterprise Data Auditing Platform** designed to validate, profile, and certify raw corporate datasets before ingestion into Power BI reports and Microsoft Fabric semantic models.
-
----
-
-## 🧠 Architecture Overview
-
-### Semantic Blackboard Multi-Agent System
-Rather than relying on generic chat bubbles or fragile prompt chains, Data Detective uses a decoupled **Semantic Blackboard Architecture**. A coordinator runtime drives sequential specialist agents, which read from and write back to a shared, version-controlled state.
-
-```mermaid
-graph TD
-    A[Upload CSV/Excel] --> B[Data Detective Backend API]
-    B --> C[PostgreSQL Metadata Persistence]
-    B --> D[LocalRuntime Orchestration]
-    D --> E[Semantic Blackboard Memory]
-    E <--> F[Planner Agent]
-    E <--> G[Quality Agent]
-    E <--> H[BI Readiness Agent]
-    E <--> I[Evaluation Agent]
-    I --> J[Enterprise BI Readiness Certificate]
-```
-
-### Agent Routing Flow
-Every run executes a deterministic pipeline that ensures data structure safety, quality validation, schema mapping, and runtime verification before producing a certificate.
-
-```mermaid
-graph LR
-    START([START]) --> Planner[Planner Agent]
-    Planner --> Quality[Quality Agent]
-    Quality --> BI[BI Readiness Agent]
-    BI --> Evaluation[Evaluation Agent]
-    Evaluation --> END([END])
-```
+> **A multi-agent Reasoning System that deterministically audits datasets for Business Intelligence readiness, grounds enterprise recommendations with Microsoft Foundry IQ, and uses Azure AI Foundry GPT-5-mini exclusively for executive communication.**
 
 ---
 
-## 🚀 Key Features
+# The Problem
 
-* **Power BI Readiness Engine**: Validates column cardinality, PK/FK links, data uniformity, date continuity, and aggregates.
-* **Statistics as Semantic Entities**: Column distributions, primary key candidates, and metrics are modeled as structured entities (`DistributionEntity`, `BusinessMetricEntity`, `AggregationRecommendationEntity`) rather than unstructured dictionary lists.
-* **Multi-Agent Execution Timeline**: Displays real-time, step-by-step progress of agent invocations, tool run durations, and blackboard state versioning.
-* **Blackboard Inspector**: Live inspectable developer debugger displaying all compiled semantic relationships, memories, and entities.
-* **Enterprise BI Readiness Certificate**: executive widget certifying datasets with weighted scores, overall statuses (PASS, WARNING, FAIL), and checked execution trace checkpoints.
+Business dashboards are only as reliable as the datasets powering them.
 
----
+Today's AI analytics assistants typically upload raw datasets directly into an LLM, forcing the model to perform statistical reasoning, schema validation, and business recommendations simultaneously.
 
-## 🛡️ Core Evaluation Methodology
+This results in:
 
-The final `EvaluationAgent` runs an automated verification check over the blackboard state, calculating an overall quality index based on five deterministic dimensions:
-
-| Dimension | Weight | Description |
-| :--- | :---: | :--- |
-| **Evidence Completeness** | 20% | Ratio of columns successfully profiled into semantic distributions. |
-| **Determinism** | 20% | Ensures 100% of reasoning checks map directly to code checks. |
-| **Recommendation Coverage** | 20% | Percentage of identified quality issues with accompanying resolution advice. |
-| **Agent Agreement** | 20% | Consistency between planner expectations and actual check discoveries. |
-| **Trace Completeness** | 20% | Ensures every log step contains a valid parent trace ID and completed status. |
+* hallucinated insights
+* inconsistent recommendations
+* poor reproducibility
+* difficult enterprise auditing
 
 ---
 
-## 🔌 Microsoft Fabric & Power BI Alignment
+# The Solution
 
-Data Detective fits natively into Microsoft-centric data engineering and analytics pipelines:
-1. **Star Schema Reasoning**: The BI Readiness Agent infers dimension and fact tables, identifying where standard calendars (e.g., date dimensions) are required.
-2. **Aggregation Safety**: Automatically recommends default aggregation settings (e.g., Sum vs Median) for columns based on statistical skewness boundaries to prevent skewed dashboards.
-3. **Foundry-Compatible Adapter**: Exposes provider-agnostic adapter hooks (`FoundryAdapterInterface`) prepared for direct migration to Azure AI Foundry agent hosting.
+Data Detective separates **reasoning** from **language generation**.
+
+Instead of asking an LLM to analyze raw data, specialized deterministic agents execute Python and Pandas based validation tools, publish structured evidence to a shared Semantic Blackboard, retrieve enterprise best practices through Microsoft Foundry IQ, and finally invoke Azure AI Foundry GPT-5-mini to communicate validated findings in executive language.
 
 ---
 
-## 🗺️ Project Roadmap
+# Architecture
 
-```
-Phase 6: BI Readiness Agent (renamed from Statistics Agent)   ██████████ 100% (Complete)
-Phase 7: Executive Report Agent                                ██████████ 0%   (Pending)
-Phase 8: Azure Ingestion Integration                           ██████████ 0%   (Pending)
-Phase 9: UI Polish & Submission                                ██████████ 0%   (Pending)
+```text
+Dataset Upload
+        │
+        ▼
+Planner Agent
+        │
+        ▼
+Quality Agent
+        │
+        ▼
+BI Readiness Agent
+        │
+        ▼
+Evaluation Agent
+        │
+        ▼
+Semantic Blackboard
+        │
+        ▼
+Microsoft Foundry IQ
+(Enterprise Knowledge Grounding)
+        │
+        ▼
+Azure AI Foundry GPT-5-mini
+(Executive Language Generation)
+        │
+        ▼
+Business Intelligence Dashboard
 ```
 
 ---
 
-## 🛠️ Tech Stack & Directory Structure
+# Core Features
 
-* **Frontend**: Next.js 16 (App Router), TypeScript, Tailwind CSS, Lucide Icons, Shadcn/ui
-* **Backend**: FastAPI, Python 3.12, SQLAlchemy (Async Asyncpg)
-* **Agent Engine**: LangGraph, LangChain
-* **Database**: PostgreSQL
+## Deterministic Multi-Agent Reasoning
 
-### Directory Map
-* [backend/agents/bi_readiness/](file:///c:/Users/krish/Desktop/AI%20Skills%20Fest/Data-Detective-Agent/backend/agents/bi_readiness/): Coordinates profile tools and generates Power BI Readiness recommendations.
-* [backend/tools/statistics/](file:///c:/Users/krish/Desktop/AI%20Skills%20Fest/Data-Detective-Agent/backend/tools/statistics/): Deterministic statistics tools (`metric_relationship_tool.py`, `outlier_summary_tool.py`).
-* [backend/services/microsoft/semantic_entities/](file:///c:/Users/krish/Desktop/AI%20Skills%20Fest/Data-Detective-Agent/backend/services/microsoft/semantic_entities/): Pydantic specifications for blackboard semantic models.
-* [frontend/app/explore/page.tsx](file:///c:/Users/krish/Desktop/AI%20Skills%20Fest/Data-Detective-Agent/frontend/app/explore/page.tsx): Main explorer interface with the Readiness Dashboard, Activity Log, and Blackboard debugger.
-* [frontend/components/workflow-viewer.tsx](file:///c:/Users/krish/Desktop/AI%20Skills%20Fest/Data-Detective-Agent/frontend/components/workflow-viewer.tsx): Renders the animated multi-agent network log steps.
+Every analytical conclusion is generated through deterministic Python execution.
+
+Agents perform:
+
+* Missing Value Analysis
+* Duplicate Detection
+* Mixed Type Detection
+* Identifier Discovery
+* High Cardinality Detection
+* Distribution Profiling
+* Outlier Analysis
+* Schema Relationship Inspection
+* Power BI Readiness Evaluation
+
+No analytical decision is delegated to a language model.
+
+---
+
+## Semantic Blackboard Collaboration
+
+Agents never communicate directly.
+
+Instead they publish structured entities into a shared Semantic Blackboard where downstream agents consume validated evidence and contribute additional findings.
+
+Benefits include:
+
+* explainable reasoning
+* reproducible execution
+* versioned state transitions
+* transparent agent collaboration
+
+---
+
+## Microsoft Foundry IQ Grounding
+
+Data Detective incorporates Microsoft Foundry IQ as an enterprise grounding layer.
+
+The knowledge corpus contains:
+
+* Power BI Modeling Guide
+* BI Readiness Framework
+* Enterprise Governance Policies
+* Data Quality Standards
+* Semantic Model Best Practices
+* Business Intelligence Case Studies
+
+Relevant passages are retrieved before executive summaries are generated, ensuring recommendations remain grounded in enterprise documentation rather than unsupported language model inference.
+
+---
+
+## Azure AI Foundry Integration
+
+Azure AI Foundry GPT-5-mini is responsible only for:
+
+* Executive Summary
+* Management Explanation
+* Certificate Wording
+* Markdown Export Generation
+
+The model never computes analytical scores or validates datasets.
+
+---
+
+# Runtime Transparency
+
+The application exposes its execution engine directly through the UI.
+
+```
+Provider:
+Azure AI Foundry
+
+Language Layer:
+gpt-5-mini
+
+Reasoning Engine:
+Semantic Blackboard
+
+Knowledge Grounding:
+Microsoft Foundry IQ
+
+Retrieved Context:
+Enterprise Documents
+
+Execution:
+Deterministic
+```
+
+---
+
+# Technology Stack
+
+## Frontend
+
+* Next.js
+* React
+* TypeScript
+* Tailwind CSS
+* Shadcn/ui
+
+## Backend
+
+* FastAPI
+* LangGraph
+* Pandas
+* PostgreSQL
+
+## AI Services
+
+* Azure AI Foundry GPT-5-mini
+* Microsoft Foundry IQ
+* Azure OpenAI
+
+---
+
+# Repository Structure
+
+```
+backend/
+    agents/
+    tools/
+    services/
+    api/
+
+frontend/
+    app/
+    components/
+    services/
+
+docs/
+    architecture.md
+    workflow.md
+    agent-responsibilities.md
+
+foundry-grounding/
+    Power BI guidance corpus
+```
+
+---
+
+# Quick Start
+
+## Backend
+
+```bash
+cd backend
+
+python -m venv .venv
+source .venv/bin/activate
+
+pip install -r requirements.txt
+
+uvicorn main:app --reload
+```
+
+Configure:
+
+```
+POSTGRES_SERVER=
+POSTGRES_PORT=
+POSTGRES_USER=
+POSTGRES_PASSWORD=
+POSTGRES_DB=
+
+AZURE_OPENAI_API_KEY=
+AZURE_OPENAI_ENDPOINT=
+AZURE_OPENAI_DEPLOYMENT_NAME=gpt-5-mini
+AZURE_OPENAI_API_VERSION=2025-04-01-preview
+```
+
+---
+
+## Frontend
+
+```bash
+cd frontend
+
+npm install
+
+npm run dev
+```
+
+Open:
+
+```
+http://localhost:3000
+```
+
+---
+
+# Demo
+
+1. Upload a CSV dataset
+2. Observe Planner → Quality → BI Readiness → Evaluation execution
+3. Watch live Telemetry Streams
+4. Inspect Semantic Blackboard updates
+5. View Microsoft Foundry IQ grounded runtime status
+6. Review Data Quality Audit
+7. Generate Enterprise Power BI Readiness Certificate
+
+---
+
+# Design Philosophy
+
+> **Reason first. Retrieve enterprise knowledge second. Generate language last.**
+
+Data Detective demonstrates how deterministic multi-agent reasoning, Semantic Blackboard collaboration, Microsoft Foundry IQ grounding, and Azure AI Foundry language synthesis can be combined to produce transparent, explainable, and enterprise-ready Business Intelligence insights.

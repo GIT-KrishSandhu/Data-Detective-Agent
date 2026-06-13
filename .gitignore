@@ -2,9 +2,14 @@
 frontend/node_modules/
 frontend/.next/
 frontend/out/
+
 backend/.venv/
 backend/__pycache__/
 backend/storage/
+backend/.pytest_cache/
+backend/**/*.pyc
+backend/**/*.pyo
+backend/**/*.pyd
 
 # Environment files
 .env
@@ -17,3 +22,5 @@ backend/storage/
 .DS_Store
 Thumbs.db
 *.log
+
+

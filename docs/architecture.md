@@ -1,56 +1,238 @@
-# Data Detective Agent - System Architecture
+# Data Detective Agent – System Architecture
 
-This document outlines the high-level architecture of the **Data Detective Agent** platform.
+> **Data Detective is a Reasoning Agent for Business Intelligence.**
+>
+> The platform does **not** rely on LLM reasoning to analyze datasets. Instead, deterministic Python agents perform evidence-based validation, publish findings to a shared Semantic Blackboard, retrieve enterprise best practices through Microsoft Foundry IQ, and finally invoke Azure AI Foundry GPT-5-mini exclusively for executive language generation.
+
+---
+
+# High Level Architecture
 
 ```mermaid
-graph TD
-    User([User App / Client]) -->|Upload Spreadsheet| API[FastAPI Backend]
-    User -->|Select Goal & Launch| API
-    
-    subgraph Multi-Agent Graph Layer
-        API -->|Instantiate Graph| LangGraph[LangGraph Workflow]
-        
-        LangGraph --> Planner[Planner Agent / Router]
-        Planner -->|Write Plan| Blackboard[(Shared Blackboard State)]
-        
-        Blackboard -->|Read Plan & Data| Quality[Quality Agent]
-        Quality -->|Write findings & recs| Blackboard
-        
-        Blackboard -->|Future Reads| Statistics[Future Statistics Agent]
-        Statistics -->|Future Writes| Blackboard
-        
-        Blackboard -->|Future Reads| Visualization[Future Visualization Agent]
-        Visualization -->|Future Writes| Blackboard
-        
-        Blackboard -->|Future Reads| Report[Future Report Agent]
-        Report -->|Final Report & Dataset| Out[Output Store]
-    end
-    
-    subgraph Storage Layer
-        API --> DB[(PostgreSQL Database)]
-        Out --> DB
-    end
+flowchart TD
+
+    U[Dataset Upload]
+
+    U --> API[FastAPI Backend]
+
+    API --> P[Planner Agent]
+
+    P --> SB[(Semantic Blackboard)]
+
+    SB --> Q[Quality Agent]
+    Q --> SB
+
+    SB --> B[BI Readiness Agent]
+    B --> SB
+
+    SB --> E[Evaluation Agent]
+    E --> SB
+
+    SB --> FIQ[Microsoft Foundry IQ]
+
+    FIQ --> GPT[Azure AI Foundry GPT-5-mini]
+
+    GPT --> R[Executive Reports & Dashboard]
+
+    R --> UI[Next.js Frontend]
 ```
 
-## Architectural Design Patterns
+---
 
-### 1. Blackboard Architecture Pattern
-All agents in the system read from and write to a centralized, shared blackboard state (`AgentState`). Rather than communicating via direct peer-to-peer messaging, workers operate asynchronously and coordinate exclusively through this shared state.
+# Execution Pipeline
 
-**Why Workers Communicate Through Shared State Instead of Direct Messaging:**
-- **Decoupling and Scalability ($O(1)$ vs $O(N^2)$ Complexity):** In a direct messaging system, adding a new agent requires updating the communication interfaces and message parsing logic of all other agents it interacts with, leading to high architectural coupling. With the Blackboard pattern, any agent can be added, updated, or removed independently as long as it adheres to the blackboard's data contract (`AgentState` / `AgentResult`).
-- **Observability and Auditability:** The blackboard holds the complete, historical state of the execution run (the "blackboard memory"). This acts as a single source of truth, making it trivial to inspect intermediate outputs, track token consumption, and build real-time visual progress logs for the end user.
-- **State-Based Coordination:** The orchestrator (LangGraph) can easily manage flow transitions, criteria evaluations, and human-in-the-loop approvals simply by reading flags on the blackboard (e.g. checking if user-approved cleaning actions are present).
+```
+CSV Upload
+      │
+      ▼
+Planner Agent
+      │
+      ▼
+Quality Agent
+      │
+      ▼
+BI Readiness Agent
+      │
+      ▼
+Evaluation Agent
+      │
+      ▼
+Semantic Blackboard
+      │
+      ▼
+Microsoft Foundry IQ Grounding
+      │
+      ▼
+Azure GPT-5-mini
+      │
+      ▼
+Executive Business Insights
+```
 
-### 2. Provider-Agnostic LLM Binding
-The `BaseAgent` class is designed to accept generic LangChain `BaseChatModel` interfaces. This makes the platform vendor-neutral, supporting local models (Ollama, Llama), standard endpoints (OpenAI GPT-4o), and cloud services (Azure OpenAI) via unified environment configurations.
+---
 
-### 3. Human-in-the-Loop (HITL) Gatekeeper
-To ensure data safety, dataset modifications are never executed autonomously. The `CleaningAgent` outputs a list of proposed modifications with python preview statements. The graph execution yields control back to the user to confirm/reject these changes, saving the selections to the state before completing the remaining stages.
+# Core Design Principles
 
-### 4. Telemetry and Logging
-The system integrates structured logging at every step using `TelemetryLogger` and `agent_execution_log` updates. We track:
-- Node entry and exit events.
-- Individual tool runtimes (e.g. Missing Value Tool, Duplicate Detector).
-- Response latencies and token metrics.
-- Database access and execution times for verification audits.
+## 1. Deterministic Reasoning
+
+Every analytical conclusion is generated through Python code, Pandas operations, statistical profiling, and schema validation.
+
+Examples include:
+
+* Missing value detection
+* Duplicate identification
+* Mixed datatype analysis
+* Identifier discovery
+* Cardinality analysis
+* Distribution profiling
+* Outlier detection
+* Schema relationship inspection
+* BI readiness evaluation
+
+No analytical decision is delegated to a language model.
+
+---
+
+## 2. Semantic Blackboard Architecture
+
+All reasoning agents communicate exclusively through a shared Semantic Blackboard.
+
+Each agent:
+
+* reads validated entities
+* contributes new evidence
+* publishes structured findings
+* updates blackboard version history
+
+Advantages include:
+
+* deterministic execution
+* agent independence
+* complete observability
+* reproducible reasoning
+* explainable audit trails
+
+instead of opaque prompt chains.
+
+---
+
+## 3. Microsoft Foundry IQ Grounding
+
+Before executive summaries are generated, the platform retrieves relevant enterprise documentation from a dedicated Microsoft Foundry IQ knowledge base.
+
+The grounding corpus includes:
+
+* Power BI Modeling Guide
+* BI Readiness Framework
+* Enterprise Governance Policies
+* Data Quality Standards
+* Semantic Model Best Practices
+* Business Intelligence Casebooks
+
+Retrieved passages are supplied as grounding context only.
+
+Foundry IQ enhances factual consistency while analytical conclusions remain deterministic.
+
+---
+
+## 4. Azure AI Foundry Language Layer
+
+Azure AI Foundry GPT-5-mini is responsible only for:
+
+* executive summaries
+* management explanations
+* certificate wording
+* markdown export generation
+
+The model never computes scores, validates datasets, or performs statistical reasoning.
+
+This architecture significantly reduces hallucination risk while improving communication quality.
+
+---
+
+# Runtime Transparency
+
+The application exposes its runtime directly to the user.
+
+```
+Provider:
+Azure AI Foundry
+
+Language Layer:
+gpt-5-mini
+
+Reasoning Engine:
+Semantic Blackboard
+
+Knowledge Grounding:
+Microsoft Foundry IQ
+
+Execution:
+Deterministic
+```
+
+Every execution is fully observable through live telemetry streams and blackboard updates.
+
+---
+
+# Agent Responsibilities
+
+### Planner Agent
+
+* establishes analytical objective
+* schedules workflow
+* initializes Semantic Blackboard
+
+### Quality Agent
+
+* performs structural validation
+* executes deterministic quality tools
+* publishes findings
+
+### BI Readiness Agent
+
+* evaluates Power BI compatibility
+* validates semantic modeling requirements
+* computes readiness indicators
+
+### Evaluation Agent
+
+* aggregates evidence
+* validates completeness
+* prepares executive outputs
+
+---
+
+# Technology Stack
+
+## Frontend
+
+* Next.js
+* React
+* TypeScript
+* Tailwind CSS
+
+## Backend
+
+* FastAPI
+* LangGraph
+* Pandas
+* PostgreSQL
+
+## AI Services
+
+* Azure AI Foundry GPT-5-mini
+* Microsoft Foundry IQ
+* Azure OpenAI
+
+---
+
+# Design Philosophy
+
+Traditional AI analytics systems send raw datasets directly to an LLM and rely on generative reasoning.
+
+Data Detective follows a different philosophy:
+
+> **Reason first. Retrieve enterprise knowledge second. Generate language last.**
+
+This separation between deterministic analytics, enterprise grounding, and executive communication produces transparent, explainable, and enterprise-ready Business Intelligence insights.

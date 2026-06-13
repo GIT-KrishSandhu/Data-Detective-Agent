@@ -1,36 +1,106 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Frontend – Data Detective Agent
 
-## Getting Started
+## Overview
 
-First, run the development server:
+The frontend is built with **Next.js + React + TypeScript** and serves as the visual interface for the **Data Detective Reasoning Agent**. Rather than functioning as a traditional chatbot, the UI visualizes the execution of a deterministic multi-agent reasoning pipeline for Business Intelligence and data quality assessment.
+
+## Key Features
+
+* Dataset Ingestion Explorer
+* Multi-Agent Orchestration Pipeline
+* Live Runtime Status Panel
+* Semantic Blackboard Visualization
+* Agent Telemetry Streams
+* Power BI Readiness Dashboard
+* Data Quality Audit Reports
+* Executive Certificate Generation
+* Microsoft Foundry IQ Grounding Indicators
+
+## Architecture
+
+```
+CSV Upload
+     │
+     ▼
+Frontend UI
+     │
+     ▼
+FastAPI Backend
+     │
+     ▼
+Planner Agent
+     │
+     ▼
+Specialized Reasoning Agents
+     │
+     ▼
+Semantic Blackboard
+     │
+     ▼
+Microsoft Foundry IQ Grounding
+     │
+     ▼
+Azure AI Foundry (gpt-5-mini)
+```
+
+## Technology Stack
+
+* Next.js
+* React
+* TypeScript
+* Tailwind CSS
+* Lucide React Icons
+
+## Runtime Panels
+
+The interface exposes the complete reasoning process instead of only displaying final AI outputs.
+
+Displayed runtime information includes:
+
+* Azure AI Foundry Provider
+* GPT-5-mini Language Layer
+* Semantic Blackboard Reasoning Engine
+* Microsoft Foundry IQ Knowledge Grounding
+* Retrieved Enterprise Context
+* Deterministic Execution Status
+
+## Design Philosophy
+
+The interface is designed around **explainable AI**.
+
+Instead of hiding analysis behind a single LLM response, every reasoning stage is visible:
+
+* Planner Agent
+* Quality Agent
+* BI Readiness Agent
+* Evaluation Agent
+
+Each agent publishes validated findings to a shared Semantic Blackboard before executive language synthesis occurs.
+
+## Local Development
+
+Install dependencies:
+
+```bash
+npm install
+```
+
+Run the development server:
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+The application will be available at:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```
+http://localhost:3000
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Ensure the backend API is running and the required environment variables are configured.
 
-## Learn More
+## Project Goal
 
-To learn more about Next.js, take a look at the following resources:
+Data Detective demonstrates a **Reasoning Agent architecture** where deterministic Python analytics produce validated evidence, Microsoft Foundry IQ supplies enterprise grounding, and Azure AI Foundry GPT-5-mini communicates those findings in clear business language.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+The frontend is intentionally designed to make every reasoning step transparent, explainable, and auditable.
